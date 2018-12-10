@@ -32,7 +32,11 @@ namespace EliteDangerousCore.UIEvents
             RolePanel = 4,  // bottom
             StationServices = 5,
             GalaxyMap = 6,
-            SystemMap = 7
+            SystemMap = 7,
+            Orrey=8,        //3.3
+            FSSMode =9, //3.3
+            SAAMode =10,//3.3
+            Codex =11,//3.3
         }
 
         public UIGUIFocus(int focus, DateTime time, bool refresh): base(UITypeEnum.GUIFocus, time, refresh)

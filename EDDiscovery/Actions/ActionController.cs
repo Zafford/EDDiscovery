@@ -41,6 +41,10 @@ namespace EDDiscovery.Actions
         public HistoryList HistoryList { get { return discoverycontroller.history; } }
         public EDDiscoveryForm DiscoveryForm { get { return discoveryform; } }
 
+        public ActionFile Get(string name, StringComparison c = StringComparison.InvariantCulture) { return actionfiles.Get(name, c); }     // get or return null
+        public ActionFile[] Get(string[] name, StringComparison c = StringComparison.InvariantCulture) { return actionfiles.Get(name, c); }
+        public ActionFile[] Get(string[] name, bool enabledstate, StringComparison c = StringComparison.InvariantCulture) { return actionfiles.Get(name, enabledstate, c); }
+
         private string lasteditedpack;
 
         static public ConditionFunctionHandlers DefaultGetCFH(ConditionFunctions c, ConditionVariables vars, ConditionPersistentData handles, int recdepth)

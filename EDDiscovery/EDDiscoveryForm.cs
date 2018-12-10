@@ -62,6 +62,7 @@ namespace EDDiscovery
 
         Task checkInstallerTask = null;
         private bool themeok = true;
+        private bool in_system_sync = false;        // between start/end sync of databases
 
         BaseUtils.GitHubRelease newRelease;
 
@@ -125,7 +126,6 @@ namespace EDDiscovery
         public EDDiscoveryForm()
         {
             RestoreFormPositionRegKey = "Form";
-
             Controller = new EDDiscoveryController(() => theme.TextBlockColor, () => theme.TextBlockHighlightColor, 
                                                         () => theme.TextBlockSuccessColor, a => BeginInvoke(a));
 
@@ -137,8 +137,8 @@ namespace EDDiscovery
             Controller.OnRefreshStarting += Controller_RefreshStarting;
             Controller.OnReportRefreshProgress += ReportRefreshProgress;
 
-            Controller.OnSyncStarting += () => { edsmRefreshTimer.Enabled = false; };
-            Controller.OnSyncComplete += () => { edsmRefreshTimer.Enabled = true; };
+            Controller.OnSyncStarting += () => { edsmRefreshTimer.Enabled = false; in_system_sync = true; };
+            Controller.OnSyncComplete += () => { edsmRefreshTimer.Enabled = true; in_system_sync = false; };
             Controller.OnReportSyncProgress += ReportSyncProgress;
 
             Controller.OnNewEntrySecond += Controller_NewEntrySecond;       // called after UI updates themselves with NewEntry
@@ -188,10 +188,6 @@ namespace EDDiscovery
 
             // open all the major tabs except the built in ones
             Trace.WriteLine(BaseUtils.AppTicks.TickCountLap() + " Creating major tabs Now");
-            MaterialCommodityData.SetUpInitialTable();
-
-
-            // Tab reset Setup
 
             if (EDDOptions.Instance.TabsReset)
             {
@@ -332,13 +328,20 @@ namespace EDDiscovery
         // OnShown is called every time Show is called
         private void EDDiscoveryForm_Shown(object sender, EventArgs e)
         {
+            if (EDDConfig.Instance.EDSMGridIDs == "Not Set")        // initial state
+            {
+                var ressel = GalaxySectorSelect.SelectGalaxyMenu(this);
+                EDDConfig.Instance.EDSMEDDBDownload = ressel.Item1 != "None";
+                EDDConfig.Instance.EDSMGridIDs = ressel.Item2;
+            }
+
             Trace.WriteLine(BaseUtils.AppTicks.TickCountLap() + " EDF shown");
             Controller.PostInit_Shown();
 
             if (!themeok)
             {
-                Controller.LogLineHighlight(("The theme stored has missing colors or other missing information" + Environment.NewLine + 
-                "Correct the missing colors or other information manually using the Theme Editor in Settings").Tx(this,"ThemeW"));
+                Controller.LogLineHighlight(("The theme stored has missing colors or other missing information" + Environment.NewLine +
+                "Correct the missing colors or other information manually using the Theme Editor in Settings").Tx(this, "ThemeW"));
             }
 
             if (EDDOptions.Instance.NoWindowReposition == false)
@@ -346,9 +349,9 @@ namespace EDDiscovery
 
             actioncontroller.onStartup();
 
-            tabControlMain.SelectedIndexChanged += (snd, ea) => 
+            tabControlMain.SelectedIndexChanged += (snd, ea) =>
             {
-                if (tabControlMain.SelectedIndex>=0 )   // may go to -1 on a clear all
+                if (tabControlMain.SelectedIndex >= 0)   // may go to -1 on a clear all
                     ActionRun(Actions.ActionEventEDList.onTabChange, null, new Conditions.ConditionVariables("TabName", tabControlMain.TabPages[tabControlMain.SelectedIndex].Text));
             };
 
@@ -356,7 +359,12 @@ namespace EDDiscovery
 
             screenshotconverter.Start();
 
-            checkInstallerTask = CheckForNewInstallerAsync();
+            checkInstallerTask = Installer.CheckForNewInstallerAsync((rel) =>  // in thread
+            {
+                newRelease = rel;
+                BeginInvoke(new Action(() => Controller.LogLineHighlight(string.Format("New EDDiscovery installer available: {0}".Tx(this, "NI"), newRelease.ReleaseName))));
+                BeginInvoke(new Action(() => labelInfoBoxTop.Text = "New Release Available!".Tx(this, "NRA")));
+            });
 
             string alloweddlls = SQLiteConnectionUser.GetSettingString("DLLAllowed", "");
 
@@ -365,30 +373,101 @@ namespace EDDiscovery
 
             Tuple<string, string, string> res = DLLManager.Load(EDDOptions.Instance.DLLAppDirectory(), EDDApplicationContext.AppVersion, EDDOptions.Instance.DLLAppDirectory(), DLLCallBacks, alloweddlls);
 
-            if ( res.Item3.HasChars() )
+            if (res.Item3.HasChars())
             {
-                if (ExtendedControls.MessageBoxTheme.Show(this, 
-                                string.Format( ("The following application extension DLLs have been found" + Environment.NewLine +
+                if (ExtendedControls.MessageBoxTheme.Show(this,
+                                string.Format(("The following application extension DLLs have been found" + Environment.NewLine +
                                 "Do you wish to allow these to be used?" + Environment.NewLine +
                                 "{0} " + Environment.NewLine +
-                                "If you do not, either remove the DLLs from the DLL folder in ED Appdata" + Environment.NewLine + 
-                                "or deinstall the action pack which introduced the DLL" + Environment.NewLine + 
-                                "or hold down shift when launching and use the Remove all Extensions DLL option").Tx(this,"DLLW"), res.Item3),
+                                "If you do not, either remove the DLLs from the DLL folder in ED Appdata" + Environment.NewLine +
+                                "or deinstall the action pack which introduced the DLL" + Environment.NewLine +
+                                "or hold down shift when launching and use the Remove all Extensions DLL option").Tx(this, "DLLW"), res.Item3),
                                 "Warning".Tx(),
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
-                    SQLiteConnectionUser.PutSettingString("DLLAllowed", alloweddlls.AppendPrePad(res.Item3,","));
+                    SQLiteConnectionUser.PutSettingString("DLLAllowed", alloweddlls.AppendPrePad(res.Item3, ","));
                     DLLManager.UnLoad();
                     res = DLLManager.Load(EDDOptions.Instance.DLLAppDirectory(), EDDApplicationContext.AppVersion, EDDOptions.Instance.DLLAppDirectory(), DLLCallBacks, alloweddlls);
                 }
             }
 
             if (res.Item1.HasChars())
-                LogLine(string.Format("DLLs loaded: {0}".Tx(this,"DLLL"), res.Item1));
+                LogLine(string.Format("DLLs loaded: {0}".Tx(this, "DLLL"), res.Item1));
             if (res.Item2.HasChars())
-                LogLineHighlight(string.Format("DLLs failed to load: {0}".Tx(this,"DLLF") ,res.Item2));
+                LogLineHighlight(string.Format("DLLs failed to load: {0}".Tx(this, "DLLF"), res.Item2));
 
-            LogLine(string.Format("Profile {0} Loaded".Tx(this,"PROFL"), EDDProfiles.Instance.Current.Name ));
+            LogLine(string.Format("Profile {0} Loaded".Tx(this, "PROFL"), EDDProfiles.Instance.Current.Name));
+
+
+            Notifications.CheckForNewNotifications((notelist) =>
+            {
+                this.BeginInvoke(new Action(() =>
+                {
+                    string acklist = SQLiteConnectionUser.GetSettingString("NotificationLastAckTime", "");
+                    Version curver = new Version(System.Reflection.Assembly.GetExecutingAssembly().GetVersionString());
+
+                    foreach (Notifications.Notification n in notelist)
+                    {
+                        Notifications.NotificationParas p = n.Select(EDDConfig.Instance.Language);
+
+                        Version vmax = n.VersionMax != null ? new Version(n.VersionMax) : null;
+                        Version vmin = n.VersionMin != null ? new Version(n.VersionMin) : null;
+
+                        if (p != null && DateTime.UtcNow >= n.StartUTC && DateTime.UtcNow <= n.EndUTC && 
+                                ( vmax ==null || curver <= vmax) && ( vmin == null || curver >= vmin ) &&
+                                (n.actionpackpresent == null || actioncontroller.Get(n.actionpackpresent).Length > 0) &&
+                                (n.actionpackpresentenabled == null || actioncontroller.Get(n.actionpackpresentenabled, true).Length > 0) &&
+                                (n.actionpackpresentdisabled == null || actioncontroller.Get(n.actionpackpresentdisabled, false).Length > 0) &&
+                                (n.actionpacknotpresent == null || actioncontroller.Get(n.actionpacknotpresent).Length == 0)
+                                )
+                        {
+                            if (n.EntryType == "Popup")
+                            {
+                                if ( !acklist.Contains(n.StartUTC.ToStringZulu()) )
+                                    popupnotificationlist.Add(n);
+                            }
+                            else if (n.EntryType == "Log")
+                            {
+                                if (n.HighLight)
+                                    LogLineHighlight(p.Text);
+                                else
+                                    LogLine(p.Text);
+                            }
+                        }
+
+                    }
+
+                    PopUpNotification();
+
+                }));
+
+            });
+        }
+
+        List<Notifications.Notification> popupnotificationlist = new List<Notifications.Notification>();
+        void PopUpNotification()        // orgnanise pop ups one at a time..
+        {
+            if (popupnotificationlist.Count > 0)
+            {
+                Notifications.NotificationParas p = popupnotificationlist[0].Select(EDDConfig.Instance.Language);
+
+                Action<object> act = new Action<object>((o) =>      // on ack, update list of ack entries
+                {
+                    DateTime ackdate = (DateTime)o;
+                    System.Diagnostics.Debug.WriteLine("Ack to " + ackdate.ToStringZulu());
+                    SQLiteConnectionUser.PutSettingString("NotificationLastAckTime", SQLiteConnectionUser.GetSettingString("NotificationLastAckTime","") + ackdate.ToStringZulu());
+                });
+
+                ExtendedControls.InfoForm infoform = new ExtendedControls.InfoForm();
+                infoform.Info(p.Caption, this.Icon, p.Text, pointsize: popupnotificationlist[0].PointSize,
+                        acknowledgeaction: act,
+                        acknowledgedata: popupnotificationlist[0].StartUTC);
+
+                infoform.FormClosed += (s, e1) => { PopUpNotification(); };     // chain to next, one at a time..
+
+                popupnotificationlist.RemoveAt(0);
+                infoform.Show();
+            }
         }
 
         public bool DLLRunAction( string eventname, string paras )
@@ -436,58 +515,6 @@ namespace EDDiscovery
         }
 
 
-
-        #endregion
-
-        #region New Installer
-
-        private Task CheckForNewInstallerAsync()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-#if DEBUG
-                if (EDDOptions.Instance.CheckReleaseInDebug )
-                    CheckForNewinstaller();
-#else
-                CheckForNewinstaller();
-                
-#endif
-            });
-        }
-
-        private bool CheckForNewinstaller()
-        {
-            try
-            {
-
-                BaseUtils.GitHubClass github = new BaseUtils.GitHubClass(EDDiscovery.Properties.Resources.URLGithubDownload, LogLine);
-
-                BaseUtils.GitHubRelease rel = github.GetLatestRelease();
-
-                if (rel != null)
-                {
-                    var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetVersionString();
-                    var releaseVersion = rel.ReleaseVersion;
-
-                    Version v1 = new Version(releaseVersion);
-                    Version v2 = new Version(currentVersion);
-
-                    if (v1.CompareTo(v2) > 0) // Test if newer installer exists:
-                    {
-                        newRelease = rel;
-                        this.BeginInvoke(new Action(() => Controller.LogLineHighlight(string.Format("New EDDiscovery installer available: {0}".Tx(this,"NI") ,rel.ReleaseName))));
-                        this.BeginInvoke(new Action(() => labelInfoBoxTop.Text = "New Release Available!".Tx(this,"NRA")));
-                        return true;
-                    }
-                }
-            }
-            catch (Exception)
-            {
-
-            }
-
-            return false;
-        }
 
         #endregion
 
@@ -857,9 +884,15 @@ namespace EDDiscovery
             if (!Controller.ReadyForFinalClose)
             {
                 e.Cancel = true;
-                ReportRefreshProgress(-1, "Closing, please wait!".Tx(this,"Closing"));
-                actioncontroller.ActionRun(Actions.ActionEventEDList.onShutdown);
-                Controller.Shutdown();
+
+                bool goforit = !in_system_sync || ExtendedControls.MessageBoxTheme.Show("EDDiscovery is updating the EDSM and EDDB databases\r\nPress OK to close now, Cancel to wait until update is complete".Tx(this,"CloseWarning"), "Warning".Tx(), MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
+
+                if (goforit)
+                {
+                    ReportRefreshProgress(-1, "Closing, please wait!".Tx(this, "Closing"));
+                    actioncontroller.ActionRun(Actions.ActionEventEDList.onShutdown);
+                    Controller.Shutdown();
+                }
             }
         }
 
@@ -1111,13 +1144,11 @@ namespace EDDiscovery
 
         private void checkForNewReleaseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckForNewinstaller() )
+            newRelease = Installer.CheckForNewinstaller();
+            if ( newRelease != null )
             {
-                if (newRelease != null)
-                {
-                    using (NewReleaseForm frm = new NewReleaseForm(newRelease))
-                        frm.ShowDialog(this);
-                }
+                using (NewReleaseForm frm = new NewReleaseForm(newRelease))
+                    frm.ShowDialog(this);
             }
             else
             {
