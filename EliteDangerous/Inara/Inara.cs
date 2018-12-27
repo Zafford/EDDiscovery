@@ -29,6 +29,7 @@ namespace EliteDangerousCore.Inara
         public bool ValidCredentials { get { return !string.IsNullOrEmpty(commanderName) && !string.IsNullOrEmpty(apiKey); } }
 
         private string commanderName;
+        private string commanderFrontierID;
         private string apiKey;
 
         private readonly string fromSoftwareVersion;
@@ -37,7 +38,7 @@ namespace EliteDangerousCore.Inara
 
         private string InaraAPI = "inapi/v1/";      // Action end point
 
-        public InaraClass()
+        private InaraClass()
         {
             fromSoftware = "EDDiscovery";
             var assemblyFullName = Assembly.GetEntryAssembly().FullName;
@@ -51,11 +52,12 @@ namespace EliteDangerousCore.Inara
             MimeType = "application/json";      // sets Content-type
         }
 
-        public InaraClass(EDCommander cmdr) : this()
+        public InaraClass(EDCommander cmdr, string cmdrfid) : this()
         {
             if (cmdr != null)
             {
                 apiKey = cmdr.InaraAPIKey;
+                commanderFrontierID = cmdrfid;
                 commanderName = string.IsNullOrEmpty(cmdr.InaraName) ? cmdr.Name : cmdr.InaraName;
             }
         }
@@ -114,9 +116,14 @@ namespace EliteDangerousCore.Inara
 
                         datalist.Add(ro["eventData"] as JObject);       // may be null!  if no data is returned by Inara.. Only a few data requestes exists
 
-                        if ( i >= events.Count )            // inara is giving more event responses than what we asked for!
+                        if (i >= events.Count)            // inara is giving more event responses than what we asked for!
                             ret += "Too many responses to events requested" + Environment.NewLine;
-                        else if (eventstate >= 300 || eventstate < 200 )         // 2xx good
+                        else if (eventstate == 204 && ro["eventStatusText"].Str("").Contains("in-game name"))       // add/del friends can 
+                        {
+                            string cmdr = events[i]["eventData"]["commanderName"].Str("Unknown");
+                            ret += "Inara reports commander " + cmdr + " is not known to it" + Environment.NewLine;
+                        }
+                        else if (eventstate >= 300 || eventstate < 200)         // 2xx good
                             ret += "Error to request " + (events[i])["eventName"].Str() + " " + events[i].ToString() + " with " + ro["eventStatusText"].Str() + Environment.NewLine;
                     }
                 }
@@ -678,6 +685,24 @@ namespace EliteDangerousCore.Inara
 
         }
 
+        static public JToken addCommanderFriend(string commanderName, DateTime dt, string gamePlatform = "pc")
+        {
+            JObject eventData = new JObject();
+            eventData["commanderName"] = commanderName;
+            eventData["gamePlatform"] = gamePlatform;
+            return Event("addCommanderFriend", dt, eventData);
+        }
+
+        static public JToken delCommanderFriend(string commanderName, DateTime dt, string gamePlatform = "pc")
+        {
+            JObject eventData = new JObject();
+            eventData["commanderName"] = commanderName;
+            eventData["gamePlatform"] = gamePlatform;
+            return Event("delCommanderFriend", dt, eventData);
+        }
+
+
+
         #endregion
 
         #region Helpers for Format
@@ -708,6 +733,8 @@ namespace EliteDangerousCore.Inara
             jo["isDeveloped"] = false;
             jo["APIkey"] = apiKey;
             jo["commanderName"] = commanderName;
+            if (commanderFrontierID != null)
+                jo["commanderFrontierID"] = commanderFrontierID;
             return jo;
         }
 

@@ -185,6 +185,9 @@ namespace EliteDangerousCore.JournalEvents
                 foreach (KeyValuePair<string, int> k in Ingredients)        // may be commodities or materials
                     detailed += BaseUtils.FieldBuilder.Build("", MaterialCommodityData.GetNameByFDName(k.Key), "", k.Value) + "; ";
             }
+
+            if (Engineering != null)
+                detailed = detailed.AppendPrePad( Engineering.ToString() , System.Environment.NewLine);
         }
     }
 
@@ -213,7 +216,9 @@ namespace EliteDangerousCore.JournalEvents
         {
             public string Engineer { get; set; }
             public long EngineerID { get; set; }
+            public int? Rank { get; set; }       // only when unlocked
             public string Progress { get; set; }
+            public int? RankProgress { get; set; }  // newish 3.x only when unlocked
         }
 
         public JournalEngineerProgress(JObject evt) : base(evt, JournalTypeEnum.EngineerProgress)
@@ -222,34 +227,35 @@ namespace EliteDangerousCore.JournalEvents
 
             if (Engineers == null)
             {
-                Engineer = evt["Engineer"].Str();
-                EngineerID = evt["EngineerID"].LongNull();
-                Rank = evt["Rank"].IntNull();
-                Progress = evt["Progress"].Str();
+                Engineers = new ProgressInformation[1];
+                Engineers[0] = new ProgressInformation();
+                Engineers[0].Engineer = evt["Engineer"].Str();
+                Engineers[0].EngineerID = evt["EngineerID"].Long();
+                Engineers[0].Rank = evt["Rank"].IntNull();
+                Engineers[0].Progress = evt["Progress"].Str();
+                Engineers[0].RankProgress = evt["RankProgress"].IntNull();
             }
         }
 
         public ProgressInformation[] Engineers { get; set; }      // may be NULL if not startup or pre 3.3
 
-        public string Engineer { get; set; }            // may be empty if not progress during play
-        public long? EngineerID { get; set; }
-        public string Progress { get; set; }
-        public int? Rank { get; set; }
-
         public override void FillInformation(out string info, out string detailed)
         {
-            detailed = "";
-            if (Engineers != null)
+            string enginfo = "";
+            foreach (var p in Engineers)
             {
-                info = BaseUtils.FieldBuilder.Build("Progress on ; Engineers".Txb(this), Engineers.Length);
-
-                foreach (var p in Engineers)
-                {
-                    detailed += BaseUtils.FieldBuilder.Build("", p.Engineer, "", p.Progress) + System.Environment.NewLine;
-                }
+                enginfo = enginfo.AppendPrePad(BaseUtils.FieldBuilder.Build("", p.Engineer, "", p.Progress, "Rank:", p.Rank, ";%",p.RankProgress), System.Environment.NewLine);
             }
+
+            detailed = "";
+
+            if (Engineers.Length == 1)
+                info = enginfo;
             else
-                info = BaseUtils.FieldBuilder.Build("", Engineer, "Rank:".Txb(this), Rank, "Progress:".Tx(this), Progress);
+            {
+                info = BaseUtils.FieldBuilder.Build("Progress on ; Engineers".Tx(this), Engineers.Length);
+                detailed = enginfo;
+            }
         }
     }
 

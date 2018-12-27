@@ -444,6 +444,12 @@ namespace EliteDangerousCore
             return (from s in historylist where s.IsFSDJump && s.EventTimeLocal < utc select s).Count();
         }
 
+        public string GetCommanderFID()     // may be null
+        {
+            var cmdr = historylist.FindLast(x => x.EntryType == JournalTypeEnum.Commander);
+            return (cmdr?.journalEntry as JournalCommander)?.FID;
+        }
+
         public delegate bool FurthestFund(HistoryEntry he, ref double lastv);
         public HistoryEntry GetConditionally(double lastv, FurthestFund f)              // give a comparision function, find entry
         {
@@ -482,6 +488,18 @@ namespace EliteDangerousCore
                 count = he.Count - ret.Count;
                 return ret;
             }
+        }
+
+        public static IEnumerable<ISystem> FindSystemsWithinLy(List<HistoryEntry> he, ISystem centre, double minrad, double maxrad, bool spherical )
+        {
+            IEnumerable<ISystem> list;
+
+            if ( spherical )
+                list = (from x in he where x.System.HasCoordinate && x.System.Distance(centre, minrad, maxrad) select x.System );
+            else
+                list = (from x in he where x.System.HasCoordinate && x.System.Cuboid(centre, minrad, maxrad) select x.System);
+
+            return list.GroupBy(x => x.Name).Select(group => group.First());
         }
 
         #endregion
@@ -874,6 +892,14 @@ namespace EliteDangerousCore
                     }
                 }
             }
+            else if (je is JournalSAAScanComplete)
+            {
+                starscan.AddScanToBestSystem((JournalSAAScanComplete)je, Count - 1, EntryOrder);
+            }
+            else if (je is JournalFSSDiscoveryScan && he.System != null)
+            {
+                starscan.SetFSSDiscoveryScan((JournalFSSDiscoveryScan)je, he.System);
+            }
             else if (je is IBodyNameAndID)
             {
                 JournalLocOrJump jl;
@@ -890,7 +916,8 @@ namespace EliteDangerousCore
                                     bool ForceJournalReload = false,
                                     int CurrentCommander = Int32.MinValue,
                                     bool Keepuievents = true,
-                                    int fullhistoryloaddaylimit = 0
+                                    int fullhistoryloaddaylimit = 0,
+                                    string essentialitems = ""
                                     )
         {
             HistoryList hist = new HistoryList();
@@ -914,8 +941,13 @@ namespace EliteDangerousCore
             
             if ( fullhistoryloaddaylimit >0 )
             {
+                var list = (essentialitems == nameof(JournalEntry.JumpScanEssentialEvents)) ? JournalEntry.JumpScanEssentialEvents :
+                           (essentialitems == nameof(JournalEntry.JumpEssentialEvents)) ? JournalEntry.JumpEssentialEvents :
+                           (essentialitems == nameof(JournalEntry.NoEssentialEvents)) ? JournalEntry.NoEssentialEvents :
+                            JournalEntry.EssentialEvents;
+
                 jlist = JournalEntry.GetAll(CurrentCommander, 
-                    ids: JournalEntry.EssentialEvents, 
+                    ids: list,
                     allidsafter: DateTime.UtcNow.Subtract(new TimeSpan(fullhistoryloaddaylimit, 0, 0, 0))
                     ).OrderBy(x => x.EventTimeUTC).ThenBy(x => x.Id).ToList();
             }
@@ -1039,6 +1071,14 @@ namespace EliteDangerousCore
                             System.Diagnostics.Debug.WriteLine("******** Cannot add scan to system " + (je as JournalScan).BodyName + " in " + he.System.Name);
                         }
                     }
+                    else if (je.EventTypeID == JournalTypeEnum.SAAScanComplete)
+                    {
+                        this.starscan.AddScanToBestSystem((JournalSAAScanComplete)je, i, hl);
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.FSSDiscoveryScan && he.System != null)
+                    {
+                        this.starscan.SetFSSDiscoveryScan((JournalFSSDiscoveryScan)je, he.System);
+                    }
                     else if (je is IBodyNameAndID)
                     {
                         this.starscan.AddBodyToBestSystem((IBodyNameAndID)je, i, hl);
@@ -1050,6 +1090,8 @@ namespace EliteDangerousCore
         public static int MergeTypeDelay(JournalEntry je)   //0 = none
         {
             if (je.EventTypeID == JournalTypeEnum.Friends)
+                return 2000;
+            else if (je.EventTypeID == JournalTypeEnum.FSSSignalDiscovered)
                 return 2000;
             else if (je.EventTypeID == JournalTypeEnum.FuelScoop)
                 return 10000;
@@ -1077,6 +1119,13 @@ namespace EliteDangerousCore
                     EliteDangerousCore.JournalEvents.JournalFriends jf = je as EliteDangerousCore.JournalEvents.JournalFriends;
                     jfprev.AddFriend(jf);
                     //System.Diagnostics.Debug.WriteLine("Merge Friends " + jfprev.EventTimeUTC + " " + jfprev.NameList.Count);
+                    return true;
+                }
+                else if (je.EventTypeID == JournalTypeEnum.FSSSignalDiscovered && prev.EventTypeID == JournalTypeEnum.FSSSignalDiscovered) // merge friends
+                {
+                    var jdprev = prev as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
+                    var jd = je as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
+                    jdprev.Add(jd);
                     return true;
                 }
             }

@@ -26,7 +26,7 @@ namespace EliteDangerousCore.EDDN
     public static class EDDNSync
     {
         private static Thread ThreadEDDNSync;
-        private static int _running = 0;
+        private static int running = 0;
         private static bool Exit = false;
         private static ConcurrentQueue<HistoryEntry> hlscanunsyncedlist = new ConcurrentQueue<HistoryEntry>();
         private static AutoResetEvent hlscanevent = new AutoResetEvent(false);
@@ -56,7 +56,7 @@ namespace EliteDangerousCore.EDDN
             hlscanevent.Set();
 
             // Start the sync thread if it's not already running
-            if (Interlocked.CompareExchange(ref _running, 1, 0) == 0)
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
                 Exit = false;
                 ThreadEDDNSync = new System.Threading.Thread(new System.Threading.ThreadStart(SyncThread));
@@ -76,19 +76,18 @@ namespace EliteDangerousCore.EDDN
 
         private static void SyncThread()
         {
-            try
+            running = 1;
+            //mainForm.LogLine("Starting EDDN sync thread");
+
+            while (hlscanunsyncedlist.Count != 0)
             {
-                _running = 1;
-                //mainForm.LogLine("Starting EDDN sync thread");
+                HistoryEntry he = null;
 
-                while (hlscanunsyncedlist.Count != 0)
+                int eventcount = 0;
+
+                while (hlscanunsyncedlist.TryDequeue(out he))
                 {
-                    List<HistoryEntry> hl = new List<HistoryEntry>();
-                    HistoryEntry he = null;
-
-                    int eventcount = 0;
-
-                    while (hlscanunsyncedlist.TryDequeue(out he))
+                    try
                     {
                         hlscanevent.Reset();
 
@@ -98,44 +97,53 @@ namespace EliteDangerousCore.EDDN
                         {
                             System.Diagnostics.Debug.WriteLine("EDDN: Ignoring entry due to age");
                         }
-                        else if (EDDNSync.SendToEDDN(he))
+                        else
                         {
-                            // removed - too verbose logger?.Invoke($"Sent {he.EntryType.ToString()} event to EDDN ({he.EventSummary})");
-                            eventcount++;
-                        }
+                            bool? res = EDDNSync.SendToEDDN(he);
 
-                        if (Exit)
-                        {
-                            return;
+                            if (res != null)    // if attempted to send
+                            {
+                                if (res.Value == true)
+                                {
+                                    logger?.Invoke($"Sent {he.EntryType.ToString()} event to EDDN ({he.EventSummary})");
+                                    eventcount++;
+                                }
+                                else
+                                    logger?.Invoke($"Failed sending {he.EntryType.ToString()} event to EDDN ({he.EventSummary})");
+                            }
                         }
-
-                        Thread.Sleep(1000);   // Throttling to 1 per second to not kill EDDN network
                     }
-
-                    SentEvents?.Invoke(eventcount);     // tell the system..
-
-                    if (hlscanunsyncedlist.IsEmpty)     // if nothing there..
-                        hlscanevent.WaitOne(60000);     // Wait up to 60 seconds for another EDDN event to come in
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Trace.WriteLine("Exception ex:" + ex.Message);
+                        System.Diagnostics.Trace.WriteLine("Exception ex:" + ex.StackTrace);
+                        logger?.Invoke("EDDN sync Exception " + ex.Message + Environment.NewLine + ex.StackTrace);
+                    }
 
                     if (Exit)
                     {
+                        running = 0;
                         return;
                     }
+
+                    Thread.Sleep(1000);   // Throttling to 1 per second to not kill EDDN network
+                }
+
+                SentEvents?.Invoke(eventcount);     // tell the system..
+
+                if (hlscanunsyncedlist.IsEmpty)     // if nothing there..
+                    hlscanevent.WaitOne(60000);     // Wait up to 60 seconds for another EDDN event to come in
+
+                if (Exit)
+                {
+                    break;
                 }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.WriteLine("Exception ex:" + ex.Message);
-                logger?.Invoke("EDDN sync Exception " + ex.Message);
-            }
-            finally
-            {
-                _running = 0;
-            }
 
+            running = 0;
         }
 
-        static public bool SendToEDDN(HistoryEntry he)
+        static public bool? SendToEDDN(HistoryEntry he)
         {
             EDDNClass eddn = new EDDNClass();
 
@@ -160,7 +168,6 @@ namespace EliteDangerousCore.EDDN
             }
 
             JObject msg = null;
-            JObject msg2 = null;
 
             if (je.EventTypeID == JournalTypeEnum.FSDJump)
             {
@@ -180,18 +187,15 @@ namespace EliteDangerousCore.EDDN
             }
             else if (je.EventTypeID == JournalTypeEnum.Outfitting)
             {
-                //Removed - not in EDDN spec to send this msg2 = eddn.CreateEDDNJournalMessage(je as JournalOutfitting, he.System.X, he.System.Y, he.System.Z, he.System.SystemAddress);
                 msg = eddn.CreateEDDNOutfittingMessage(je as JournalOutfitting, he.System);
             }
             else if (je.EventTypeID == JournalTypeEnum.Shipyard)
             {
-                //Removed - not in EDDN spec to send this msg2 = eddn.CreateEDDNJournalMessage(je as JournalShipyard, he.System.X, he.System.Y, he.System.Z, he.System.SystemAddress);
                 msg = eddn.CreateEDDNShipyardMessage(je as JournalShipyard, he.System);
             }
             else if (je.EventTypeID == JournalTypeEnum.Market)
             {
                 JournalMarket jm = je as JournalMarket;
-                //Removed - not in EDDN spec to send this msg2 = eddn.CreateEDDNJournalMessage(jm, he.System.X, he.System.Y, he.System.Z, he.System.SystemAddress);
                 msg = eddn.CreateEDDNCommodityMessage(jm.Commodities, jm.StarSystem, jm.Station, jm.MarketID, DateTime.UtcNow);      // if its devoid of data, null returned
             }
 
@@ -199,17 +203,14 @@ namespace EliteDangerousCore.EDDN
             {
                 if (eddn.PostMessage(msg))
                 {
-                    if (msg2 != null)
-                    {
-                        eddn.PostMessage(msg2);
-                    }
-
                     he.SetEddnSync();
                     return true;
                 }
+                else
+                    return false;
             }
-
-            return false;
+            else
+                return null;
         }
 
     }

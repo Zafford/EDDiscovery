@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace EliteDangerousCore.JournalEvents
@@ -53,7 +54,7 @@ namespace EliteDangerousCore.JournalEvents
 
         public override void FillInformation(out string info, out string detailed)
         {
-            info = BaseUtils.FieldBuilder.Build("Progress:;%;N1".Txb(this), Progress, "Bodies:", BodyCount, "Others:".Txb(this), NonBodyCount);
+            info = BaseUtils.FieldBuilder.Build("Progress:;%;N1".Tx(this), Progress, "Bodies:", BodyCount, "Others:".Tx(this), NonBodyCount);
             detailed = "";
         }
     }
@@ -61,66 +62,97 @@ namespace EliteDangerousCore.JournalEvents
     [JournalEntryType(JournalTypeEnum.FSSSignalDiscovered)]
     public class JournalFSSSignalDiscovered : JournalEntry
     {
-        public JournalFSSSignalDiscovered(JObject evt) : base(evt, JournalTypeEnum.FSSSignalDiscovered)
+        public class FSSSignal
         {
-            SignalName = evt["SignalName"].Str();
-            SignalName_Localised = JournalFieldNaming.CheckLocalisation(evt["SignalName_Localised"].Str(), SignalName);
+            public string SignalName { get; set; }
+            public string SignalName_Localised { get; set; }
+            public string SpawingState { get; set; }
+            public string SpawingState_Localised { get; set; }
+            public string SpawingFaction { get; set; }
+            public string SpawingFaction_Localised { get; set; }
+            public double? TimeRemaining { get; set; }          // null if not expiring
+            public long? SystemAddress { get; set; }
 
-            SpawingState = evt["SpawingState"].Str();
-            SpawingState_Localised = JournalFieldNaming.CheckLocalisation(evt["SpawingState_Localised"].Str(), SpawingState);
+            public int? ThreatLevel { get; set; }
+            public string USSType { get; set; }
+            public string USSTypeLocalised { get; set; }
+            public bool? IsStation { get; set; }
 
-            SpawingFaction = evt["SpawingFaction"].Str();
-            SpawingFaction_Localised = JournalFieldNaming.CheckLocalisation(evt["SpawingFaction_Localised"].Str(), SpawingFaction);
+            public System.DateTime ExpiryUTC { get; set; }
+            public System.DateTime ExpiryLocal { get; set; }
 
-            TimeRemaining = evt["TimeRemaining"].DoubleNull();
-
-            SystemAddress = evt["SystemAddress"].LongNull();
-
-            ThreatLevel = evt["USSThreat"].IntNull();
-            USSType = evt["USSType"].Str();
-            USSTypeLocalised = JournalFieldNaming.CheckLocalisation(evt["USSType_Localised"].Str(), USSType);
-            IsStation = evt["USSType"].BoolNull();
-
-            if (TimeRemaining != null)
+            public FSSSignal(JObject evt , System.DateTime EventTimeUTC)
             {
-                ExpiryUTC = EventTimeUTC.AddSeconds(TimeRemaining.Value);
-                ExpiryLocal = ExpiryUTC.ToLocalTime();
+                SignalName = evt["SignalName"].Str();
+                SignalName_Localised = JournalFieldNaming.CheckLocalisation(evt["SignalName_Localised"].Str(), SignalName);
+
+                SpawingState = evt["SpawingState"].Str();
+                SpawingState_Localised = JournalFieldNaming.CheckLocalisation(evt["SpawingState_Localised"].Str(), SpawingState);
+
+                SpawingFaction = evt["SpawingFaction"].Str();
+                SpawingFaction_Localised = JournalFieldNaming.CheckLocalisation(evt["SpawingFaction_Localised"].Str(), SpawingFaction);
+
+                TimeRemaining = evt["TimeRemaining"].DoubleNull();
+
+                SystemAddress = evt["SystemAddress"].LongNull();
+
+                ThreatLevel = evt["USSThreat"].IntNull();
+                USSType = evt["USSType"].Str();
+                USSTypeLocalised = JournalFieldNaming.CheckLocalisation(evt["USSType_Localised"].Str(), USSType);
+                IsStation = evt["IsStation"].BoolNull();
+
+                if (TimeRemaining != null)
+                {
+                    ExpiryUTC = EventTimeUTC.AddSeconds(TimeRemaining.Value);
+                    ExpiryLocal = ExpiryUTC.ToLocalTime();
+                }
+            }
+
+            public override string ToString()
+            {
+                return BaseUtils.FieldBuilder.Build("", SignalName_Localised, "State:".Tx(this),
+                            SpawingState_Localised, "Faction:".Tx(this), SpawingFaction_Localised,
+                            "USS Type:".Tx(this), USSTypeLocalised, " Threat Level:".Tx(this), ThreatLevel,
+                            ";Station".Tx(this, "StationBool"), IsStation
+                            );
             }
         }
 
-        public string SignalName { get; set; }
-        public string SignalName_Localised { get; set; }
-        public string SpawingState { get; set; }
-        public string SpawingState_Localised { get; set; }
-        public string SpawingFaction { get; set; }
-        public string SpawingFaction_Localised { get; set; }
-        public double? TimeRemaining { get; set; }          // null if not expiring
-        public long? SystemAddress { get; set; }
+        public JournalFSSSignalDiscovered(JObject evt) : base(evt, JournalTypeEnum.FSSSignalDiscovered)
+        {
+            Signals = new List<FSSSignal>();
+            Signals.Add(new FSSSignal(evt, EventTimeUTC));
+        }
 
-        public int? ThreatLevel { get; set; }
-        public string USSType { get; set; }
-        public string USSTypeLocalised { get; set; }
-        public bool? IsStation { get; set; }
+        public void Add(JournalFSSSignalDiscovered next )
+        {
+            Signals.Add(next.Signals[0]);
+        }
 
-        public System.DateTime ExpiryUTC { get; set; }   
-        public System.DateTime ExpiryLocal { get; set; } 
+        public List<FSSSignal> Signals;
 
         public override void FillInformation(out string info, out string detailed)
         {
-            info = BaseUtils.FieldBuilder.Build("", SignalName_Localised, "State:".Txb(this),
-                            SpawingState_Localised, "Faction:".Txb(this), SpawingFaction_Localised,
-                            "USS Type:".Txb(this), USSTypeLocalised, " Threat Level:".Txb(this), ThreatLevel, 
-                            ";Station".Txb(this,"StationBool"), IsStation
-                            );
-
-            if ( TimeRemaining != null )
-                info += ", Expires:".Txb(this) + (EliteConfigInstance.InstanceConfig.DisplayUTC ? ExpiryUTC : ExpiryLocal).ToString("g");
-
             detailed = "";
+
+            if (Signals.Count > 1)
+            {
+                info = BaseUtils.FieldBuilder.Build("Detected ; signals".Tx(this), Signals.Count);
+
+                foreach (var s in Signals)
+                    info += ", " + s.SignalName_Localised;
+
+                foreach (var s in Signals)
+                    detailed = detailed.AppendPrePad(s.ToString(),System.Environment.NewLine);
+            }
+            else
+            {
+                info = Signals[0].ToString();
+            }
         }
     }
 
-    
+   
     [JournalEntryType(JournalTypeEnum.NavBeaconScan)]
     public class JournalNavBeaconScan : JournalEntry
     {
@@ -155,12 +187,13 @@ namespace EliteDangerousCore.JournalEvents
         public string BodyName { get; set; }
         public int ProbesUsed { get; set; }
         public int EfficiencyTarget { get; set; }
+        public string BodyDesignation { get; set; }
 
         public override void FillInformation(out string info, out string detailed)
         {
             info = BaseUtils.FieldBuilder.Build("", BodyName,
-                                                "Probes:".Txb(this), ProbesUsed,
-                                                "Efficiency Target:".Txb(this), EfficiencyTarget);
+                                                "Probes:".Tx(this), ProbesUsed,
+                                                "Efficiency Target:".Tx(this), EfficiencyTarget);
             detailed = "";
         }
     }

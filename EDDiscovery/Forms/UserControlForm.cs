@@ -110,6 +110,8 @@ namespace EDDiscovery.Forms
             UpdateControls();
 
             Invalidate();
+
+            BaseUtils.Translator.Instance.Translate(toolTip1,this);
         }
 
         public void SetControlText(string text)
@@ -492,7 +494,7 @@ namespace EDDiscovery.Forms
         {
             UserControlForm tcf = (UserControlForm)sender;
             tabforms.Remove(tcf);
-            discoveryform.ActionRun(Actions.ActionEventEDList.onPopDown, null, new Conditions.ConditionVariables(new string[] { "PopOutName", tcf.dbrefname.Substring(9), "PopOutTitle", tcf.wintitle }));
+            discoveryform.ActionRun(Actions.ActionEventEDList.onPopDown, null, new BaseUtils.Variables(new string[] { "PopOutName", tcf.dbrefname.Substring(9), "PopOutTitle", tcf.wintitle }));
         }
 
         public List<UserControlCommonBase> GetListOfControls(Type c)

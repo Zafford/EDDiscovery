@@ -133,6 +133,14 @@ namespace EliteDangerousCore
             return cachelist.Values.Where(x => x.Category == CommodityCategory).ToArray();
         }
 
+        public static MaterialCommodityData[] GetCommoditiesRaw()
+        {
+            if (cachelist == null)
+                FillTable();
+
+            return cachelist.Values.Where(x => x.Category == CommodityCategory || x.Category == MaterialRawCategory).ToArray();
+        }
+
         #endregion
 
         public MaterialCommodityData()
@@ -481,7 +489,7 @@ namespace EliteDangerousCore
             string md = "Medicines";
             AddCommodityList("Advanced Medicines;Basic Medicines;Combat Stabilisers;Performance Enhancers;Progenitor Cells", md);
             AddCommodity("Agri-Medicines", md, "agriculturalmedicines");
-            AddCommodity("Nanomedicines", md, "Nanomedicines");
+            AddCommodityRare("Nanomedicines", md, "Nanomedicines");
 
             AddCommodityList("Aluminium;Beryllium;Bismuth;Cobalt;Copper;Gallium;Gold;Hafnium 178;Indium;Lanthanum;Lithium;Osmium;Palladium;Platinum;Praseodymium;Samarium;Silver;Tantalum;Thallium;Thorium;Titanium;Uranium", "Metals");
             AddCommodity("Platinum Alloy", "Metals", "PlatinumAloy");

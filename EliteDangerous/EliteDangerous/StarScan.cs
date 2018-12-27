@@ -44,6 +44,7 @@ namespace EliteDangerousCore
             public SortedList<int, ScanNode> NodesByID = new SortedList<int, ScanNode>();
             public int MaxTopLevelBodyID = 0;
             public int MinPlanetBodyID = 512;
+            public int? TotalBodies;
 
             public IEnumerable<ScanNode> Bodies
             {
@@ -65,7 +66,7 @@ namespace EliteDangerousCore
             }
         };
 
-        public enum ScanNodeType { star, barycentre, body, belt, beltcluster };
+        public enum ScanNodeType { star, barycentre, body, belt, beltcluster, ring };
 
         public class ScanNode
         {
@@ -76,6 +77,7 @@ namespace EliteDangerousCore
             public SortedList<string, ScanNode> children;         // kids
             public int level;                       // level within SystemNode
             public int? BodyID;
+            public bool IsMapped;
 
             public bool IsTopLevelNode;
 
@@ -138,11 +140,11 @@ namespace EliteDangerousCore
                 if (ScanData != null && ScanData.IsEDSMBody == false)
                     return true;
 
-                if ( children != null )
+                if (children != null)
                 {
                     foreach (KeyValuePair<string, ScanNode> csn in children)
                     {
-                        if ( csn.Value.DoesNodeHaveNonEDSMScansBelow())
+                        if (csn.Value.DoesNodeHaveNonEDSMScansBelow())
                             return true;
                     }
                 }
@@ -176,7 +178,7 @@ namespace EliteDangerousCore
             return (sn != null && sn.EDSMWebChecked);
         }
 
-        public SystemNode FindSystem(ISystem sys, bool edsmweblookup)    // Find the system. Optionally do a EDSM web lookup
+        public SystemNode FindSystem(ISystem sys, bool edsmweblookup, bool byname = false)    // Find the system. Optionally do a EDSM web lookup
         {
             System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);  // foreground only
 
@@ -184,11 +186,9 @@ namespace EliteDangerousCore
 
             // System.Diagnostics.Debug.WriteLine("Scan Lookup " + sys.Name + " found " + (sn != null) + " web? " + edsmweblookup + " edsm lookup " + (sn?.EDSMAdded ?? false));
 
-            // must have an ID, and either not there or we have not checked EDSM yet in some way
-
-            if ((sys.EDSMID > 0 || (sys.SystemAddress != null && sys.SystemAddress > 0)) && (sn == null || sn.EDSMCacheCheck == false || ( edsmweblookup && !sn.EDSMWebChecked)))
+            if ((sys.EDSMID > 0 || (sys.SystemAddress != null && sys.SystemAddress > 0) || (byname && sys.Name.HasChars())) && (sn == null || sn.EDSMCacheCheck == false || (edsmweblookup && !sn.EDSMWebChecked)))
             {
-                List<JournalScan> jl = EliteDangerousCore.EDSM.EDSMClass.GetBodiesList(sys.EDSMID, edsmweblookup: edsmweblookup, id64: sys.SystemAddress); // lookup, with optional web
+                List<JournalScan> jl = EliteDangerousCore.EDSM.EDSMClass.GetBodiesList(sys.EDSMID, edsmweblookup: edsmweblookup, id64: sys.SystemAddress, sysname:sys.Name); // lookup, with optional web
 
                 //if ( edsmweblookup) System.Diagnostics.Debug.WriteLine("Lookup bodies " + sys.Name + " " + sys.EDSMID + " result " + (jl?.Count ?? -1));
 
@@ -217,7 +217,7 @@ namespace EliteDangerousCore
         }
 
         // used by historylist during full history processing in background
-        public bool AddScanToBestSystem(JournalScan je, int startindex, List<HistoryEntry> hl) 
+        public bool AddScanToBestSystem(JournalScan je, int startindex, List<HistoryEntry> hl)
         {
             HistoryEntry he;
             JournalLocOrJump jl;
@@ -304,6 +304,52 @@ namespace EliteDangerousCore
             return Process(je, hl[startindex].System, true);         // no relationship, add..
         }
 
+        // used by historylist during full history processing in background
+        public bool AddScanToBestSystem(JournalSAAScanComplete je, int startindex, List<HistoryEntry> hl)
+        {
+            HistoryEntry he;
+            JournalLocOrJump jl;
+            return AddScanToBestSystem(je, startindex, hl, out he, out jl);
+        }
+
+        // used by historylist directly for a single update during play, in foreground..  Also used by above.. so can be either in fore/back
+        public bool AddScanToBestSystem(JournalSAAScanComplete je, int startindex, List<HistoryEntry> hl, out HistoryEntry he, out JournalLocOrJump jl)
+        {
+            for (int j = startindex; j >= 0; j--)
+            {
+                he = hl[j];
+
+                if (he.IsLocOrJump)
+                {
+                    jl = (JournalLocOrJump)he.journalEntry;
+                    string designation = GetBodyDesignation(je, he.System.Name);
+
+                    if (IsStarNameRelated(he.System.Name, designation))       // if its part of the name, use it
+                    {
+                        je.BodyDesignation = designation;
+                        return Process(je, he.System, true);
+                    }
+                    else if (jl != null && IsStarNameRelated(jl.StarSystem, designation))
+                    {
+                        // Ignore scans where the system name has changed
+                        return false;
+                    }
+                }
+            }
+
+            jl = null;
+            he = null;
+
+            je.BodyDesignation = GetBodyDesignation(je, hl[startindex].System.Name);
+            return Process(je, hl[startindex].System, true);         // no relationship, add..
+        }
+
+        public void SetFSSDiscoveryScan(JournalFSSDiscoveryScan je, ISystem sys)
+        {
+            SystemNode sn = GetOrCreateSystemNode(sys);
+            sn.TotalBodies = je.BodyCount;
+        }
+
         private bool Process(JournalScan sc, ISystem sys, bool reprocessPrimary = false)  // background or foreground.. FALSE if you can't process it
         {
             SystemNode sn = GetOrCreateSystemNode(sys);
@@ -316,9 +362,10 @@ namespace EliteDangerousCore
 
             ScanNodeType starscannodetype = ScanNodeType.star;          // presuming.. 
             bool isbeltcluster = false;
+            bool isring = false;
 
             // Extract elements from name
-            List<string> elements = ExtractElements(sc, sys, out isbeltcluster, out starscannodetype);
+            List<string> elements = ExtractElements(sc, sys, out isbeltcluster, out starscannodetype, out isring);
 
             // Bail out if no elements extracted
             if (elements.Count == 0)
@@ -337,7 +384,7 @@ namespace EliteDangerousCore
             string customname = GetCustomName(sc, sys);
 
             // Process elements
-            ScanNode node = ProcessElements(sc, sys, sn, customname, elements, starscannodetype, isbeltcluster);
+            ScanNode node = ProcessElements(sc, sys, sn, customname, elements, starscannodetype, isbeltcluster, isring);
 
             if (node.BodyID != null)
             {
@@ -375,7 +422,7 @@ namespace EliteDangerousCore
             {
                 foreach (var body in sn.Bodies)
                 {
-                    if ((body.fullname == sc.Body || body.customname == sc.Body) && 
+                    if ((body.fullname == sc.Body || body.customname == sc.Body) &&
                         (body.fullname != sc.StarSystem || (sc.BodyType == "Star" && body.level == 0) || (sc.BodyType != "Star" && body.level != 0)))
                     {
                         relatedScan = body;
@@ -443,6 +490,53 @@ namespace EliteDangerousCore
             return true;
         }
 
+        private bool Process(JournalSAAScanComplete sc, ISystem sys, bool reprocessPrimary = false)  // background or foreground.. FALSE if you can't process it
+        {
+            SystemNode sn = GetOrCreateSystemNode(sys);
+            ScanNode relatedScan = null;
+
+            if (sn.NodesByID.ContainsKey((int)sc.BodyID))
+            {
+                relatedScan = sn.NodesByID[(int)sc.BodyID];
+                if (relatedScan.ScanData != null && relatedScan.ScanData.BodyDesignation != null)
+                {
+                    sc.BodyDesignation = relatedScan.ScanData.BodyDesignation;
+                }
+            }
+            else if (sc.BodyDesignation != null && sc.BodyDesignation != sc.BodyName)
+            {
+                foreach (var body in sn.Bodies)
+                {
+                    if (body.fullname == sc.BodyDesignation)
+                    {
+                        relatedScan = body;
+                        break;
+                    }
+                }
+            }
+
+            if (relatedScan == null)
+            {
+                foreach (var body in sn.Bodies)
+                {
+                    if ((body.fullname == sc.BodyName || body.customname == sc.BodyName) &&
+                        (body.fullname != sys.Name || body.level != 0))
+                    {
+                        relatedScan = body;
+                        break;
+                    }
+                }
+            }
+
+            if (relatedScan != null)
+            {
+                relatedScan.IsMapped = true;
+                return true; // We already have the scan
+            }
+
+            return false;
+        }
+
         private void ReProcess(SystemNode sysnode)
         {
             List<JournalScan> bodies = sysnode.Bodies.Where(b => b.ScanData != null).Select(b => b.ScanData).ToList();
@@ -501,10 +595,11 @@ namespace EliteDangerousCore
             return sn;
         }
 
-        private List<string> ExtractElements(JournalScan sc, ISystem sys, out bool isbeltcluster, out ScanNodeType starscannodetype)
+        private List<string> ExtractElements(JournalScan sc, ISystem sys, out bool isbeltcluster, out ScanNodeType starscannodetype, out bool isring)
         {
             starscannodetype = ScanNodeType.star;
             isbeltcluster = false;
+            isring = false;
             List<string> elements;
             string rest = sc.IsStarNameRelatedReturnRest(sys.Name);
 
@@ -533,6 +628,14 @@ namespace EliteDangerousCore
                     {
                         elements = new List<string> { elements[0], elements[1] + " " + elements[2], elements[3] + " " + elements[4] };
                         isbeltcluster = true;
+                    }
+                    else if (elements.Count >= 3 &&
+                             elements[elements.Count - 1].Equals("ring", StringComparison.InvariantCultureIgnoreCase) &&
+                             elements[elements.Count - 2].Length == 1 &&
+                             char.IsLetter(elements[elements.Count - 2][0]))
+                    {
+                        elements = elements.Take(elements.Count - 2).Concat(new string[] { elements[elements.Count - 2] + " " + elements[elements.Count - 1] }).ToList();
+                        isring = true;
                     }
 
                     if (char.IsDigit(elements[0][0]))       // if digits, planet number, no star designator
@@ -661,7 +764,7 @@ namespace EliteDangerousCore
             return customname;
         }
 
-        private ScanNode ProcessElements(JournalScan sc, ISystem sys, SystemNode sn, string customname, List<string> elements, ScanNodeType starscannodetype, bool isbeltcluster)
+        private ScanNode ProcessElements(JournalScan sc, ISystem sys, SystemNode sn, string customname, List<string> elements, ScanNodeType starscannodetype, bool isbeltcluster, bool isring = false)
         {
             SortedList<string, ScanNode> cnodes = sn.starnodes;
             ScanNode node = null;
@@ -684,6 +787,8 @@ namespace EliteDangerousCore
                     sublvtype = starscannodetype;
                 else if (isbeltcluster)
                     sublvtype = lvl == 1 ? ScanNodeType.belt : ScanNodeType.beltcluster;
+                else if (isring && lvl == elements.Count - 1)
+                    sublvtype = ScanNodeType.ring;
                 else
                     sublvtype = ScanNodeType.body;
 
@@ -1045,6 +1150,32 @@ namespace EliteDangerousCore
             if (desigmap.ContainsKey(system) && desigmap[system].ContainsKey(bodyname))
             {
                 return desigmap[system][bodyname];
+            }
+
+            if (bodyname.Equals(system, StringComparison.InvariantCultureIgnoreCase) || bodyname.StartsWith(system + " ", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return bodyname;
+            }
+
+            return bodyname;
+        }
+
+        private string GetBodyDesignation(JournalSAAScanComplete je, string system)
+        {
+            if (je.BodyName == null || system == null)
+                return null;
+
+            string bodyname = je.BodyName;
+            int bodyid = (int)je.BodyID;
+
+            if (bodyIdDesignationMap.ContainsKey(system) && bodyIdDesignationMap[system].ContainsKey(bodyid) && bodyIdDesignationMap[system][bodyid].NameEquals(bodyname))
+            {
+                return bodyIdDesignationMap[system][bodyid].Designation;
+            }
+
+            if (planetDesignationMap.ContainsKey(system) && planetDesignationMap[system].ContainsKey(bodyname))
+            {
+                return planetDesignationMap[system][bodyname];
             }
 
             if (bodyname.Equals(system, StringComparison.InvariantCultureIgnoreCase) || bodyname.StartsWith(system + " ", StringComparison.InvariantCultureIgnoreCase))
