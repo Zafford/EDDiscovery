@@ -65,6 +65,7 @@ namespace EliteDangerousCore
         CrewMemberJoins = 1270,
         CrewMemberQuits = 1280,
         CrewMemberRoleChange = 1285,
+        CrimeVictim = 129,
         DataScanned = 1030,
         DatalinkScan = 130,
         DatalinkVoucher = 1020,
@@ -166,6 +167,7 @@ namespace EliteDangerousCore
         PowerplayVoucher = 650,
         Progress = 660,
         Promotion = 670,
+        ProspectedAsteroid = 673,
         PVPKill = 675,
         QuitACrew = 677,
         Rank = 680,
@@ -180,6 +182,7 @@ namespace EliteDangerousCore
         Reputation = 748,
         RestockVehicle = 750,
         Resurrect = 760,
+        ReservoirReplenished = 763,
         SAAScanComplete = 765,
         Scan = 770,
         Scanned = 772,
@@ -211,6 +214,7 @@ namespace EliteDangerousCore
         SquadronCreated = 891,
         SquadronDemotion = 892,
         SquadronPromotion = 893,
+        SquadronStartup = 894,
         SupercruiseExit = 900,
         Synthesis = 910,
         SystemsShutdown = 915,
@@ -260,9 +264,8 @@ namespace EliteDangerousCore
 
         public JournalTypeEnum EventTypeID { get; private set; }
         public string EventTypeStr { get { return EventTypeID.ToString(); } }             // name of event. these two duplicate each other, string if for debuggin in the db view of a browser
-        public string EventSummaryName { get; private set; }     // filled in during creation, its EventTypeID expanded out.  Stored since splitcaseword is expensive in time
 
-        public System.Drawing.Image Icon { get { return JournalTypeIcons[this.IconEventType]; } }   // Icon to paint for this
+        public System.Drawing.Image Icon { get { return JournalTypeIcons.ContainsKey(this.IconEventType) ? JournalTypeIcons[this.IconEventType] : JournalTypeIcons[JournalTypeEnum.Unknown]; } }   // Icon to paint for this
 
         public DateTime EventTimeUTC { get;  set; }
 
@@ -346,6 +349,20 @@ namespace EliteDangerousCore
                 JournalTypeEnum.ClearSavedGame,
             };
 
+        static public JournalTypeEnum[] FullStatsEssentialEvents
+        {
+            get
+            {
+                var statsAdditional = new JournalTypeEnum[]
+                {
+                    // Travel
+                    JournalTypeEnum.JetConeBoost, JournalTypeEnum.Touchdown, JournalTypeEnum.HeatWarning, JournalTypeEnum.HeatDamage,
+                    JournalTypeEnum.FuelScoop, JournalTypeEnum.SAAScanComplete
+                };
+                return EssentialEvents.Concat(statsAdditional).ToArray();
+            }
+        }
+
         static public JournalTypeEnum[] JumpScanEssentialEvents = new JournalTypeEnum[]     // 
             {
                 JournalTypeEnum.FSDJump,
@@ -390,7 +407,7 @@ namespace EliteDangerousCore
 
         // enum -> Summary name
 
-        private static Dictionary<JournalTypeEnum, string> SummaryNames = GetJournalSummaryNames();
+        private static Dictionary<JournalTypeEnum, string> SummaryNames = GetJournalSummaryNames();     // precompute the names due to the expense of splitcapsword
 
         private static Dictionary<JournalTypeEnum, string> GetJournalSummaryNames()
         {
@@ -412,7 +429,7 @@ namespace EliteDangerousCore
 
         public abstract void FillInformation(out string info, out string detailed);     // all entries must implement
 
-        public virtual string FillSummary { get { return SummaryNames[EventTypeID];  } }  // entry may be overridden for specialist output
+        public virtual string SummaryName(ISystem sys) { return SummaryNames.ContainsKey(EventTypeID) ? SummaryNames[EventTypeID] : EventTypeID.ToString(); }  // entry may be overridden for specialist output
 
         #endregion
 
@@ -421,7 +438,7 @@ namespace EliteDangerousCore
         public JournalEntry(DateTime utc, int synced , JournalTypeEnum jtype)       // manual creation via NEW
         {
             EventTypeID = jtype;
-            EventSummaryName = FillSummary;     // after creation, so journal fields are populated.
+            //EventSummaryName = FillSummary;     // after creation, so journal fields are populated.
             EventTimeUTC = utc;
             Synced = synced;
             TLUId = 0;
@@ -430,7 +447,10 @@ namespace EliteDangerousCore
         public JournalEntry(JObject jo, JournalTypeEnum jtype)              // called by journal entries to create themselves
         {
             EventTypeID = jtype;
-            EventTimeUTC = DateTime.Parse(jo.Value<string>("timestamp"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+            if (DateTime.TryParse(jo["timestamp"].Str(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out DateTime etime))
+                EventTimeUTC = etime;
+            else
+                EventTimeUTC = DateTime.MinValue;
             TLUId = 0;
         }
 
@@ -496,11 +516,11 @@ namespace EliteDangerousCore
                 cmd.AddParameterWithValue("@EdsmId", EdsmID);
                 cmd.AddParameterWithValue("@Synced", Synced);
 
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
 
                 using (DbCommand cmd2 = cn.CreateCommand("Select Max(id) as id from JournalEntries"))
                 {
-                    Id = (int)(long)SQLiteDBClass.SQLScalar(cn, cmd2);
+                    Id = (int)(long)cn.SQLScalar( cmd2);
                 }
                 return true;
             }
@@ -526,7 +546,7 @@ namespace EliteDangerousCore
                 cmd.AddParameterWithValue("@EventStrName", EventTypeStr);
                 cmd.AddParameterWithValue("@EdsmId", EdsmID);
                 cmd.AddParameterWithValue("@Synced", Synced);
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
 
                 return true;
             }
@@ -548,7 +568,7 @@ namespace EliteDangerousCore
                 {
                     cmd.AddParameterWithValue("@ID", Id);
                     cmd.AddParameterWithValue("@EventData", jo.ToString());
-                    SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                    cn.SQLNonQueryText( cmd);
                 }
             }
             finally
@@ -573,7 +593,7 @@ namespace EliteDangerousCore
             using (DbCommand cmd = cn.CreateCommand("DELETE FROM JournalEntries WHERE id = @id"))
             {
                 cmd.AddParameterWithValue("@id", idvalue);
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
             }
         }
 
@@ -661,7 +681,7 @@ namespace EliteDangerousCore
                     cmd.AddParameterWithValue("@journalid", Id);
                     cmd.AddParameterWithValue("@sync", Synced);
                     System.Diagnostics.Trace.WriteLine(string.Format("Update sync flag ID {0} with {1}", Id , Synced));
-                    SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                    cn.SQLNonQueryText( cmd);
                 }
             }
             finally
@@ -682,7 +702,7 @@ namespace EliteDangerousCore
                     cmd.AddParameterWithValue("@journalid", Id);
                     cmd.AddParameterWithValue("@cmdrid", cmdrid);
                     System.Diagnostics.Trace.WriteLine(string.Format("Update cmdr id ID {0} with map colour", Id));
-                    SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                    cn.SQLNonQueryText( cmd);
                     CommanderId = cmdrid;
                 }
             }
@@ -700,7 +720,7 @@ namespace EliteDangerousCore
                     cmd.AddParameterWithValue("@cmdridto", to);
                     cmd.AddParameterWithValue("@cmdridfrom", from);
                     System.Diagnostics.Trace.WriteLine(string.Format("Update cmdr id ID {0} with {1}", from, to));
-                    SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                    cn.SQLNonQueryText( cmd);
                 }
             }
             return true;
@@ -718,7 +738,6 @@ namespace EliteDangerousCore
                 jo["faction"] = faction;
                 jo["commodities"] = jcommodities;
                 JournalEDDCommodityPrices jis = new JournalEDDCommodityPrices(jo);
-                jis.EventSummaryName = jis.FillSummary;
                 jis.CommanderId = cmdrid;
                 jis.Add(jo, cn);
 
@@ -753,7 +772,16 @@ namespace EliteDangerousCore
                     while (reader.Read())
                     {
                         string EDataString = (string)reader["EventData"];
-                        return JObject.Parse(EDataString);
+
+                        try
+                        {
+                            return JObject.Parse(EDataString);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine($"Error parsing journal entry\n{EDataString}\n{ex.ToString()}");
+                            return null;
+                        }
                     }
                 }
             }
@@ -865,7 +893,7 @@ namespace EliteDangerousCore
 
                     cmd.CommandText += " Order By EventTime ASC";
 
-                    DataSet ds = SQLiteDBClass.SQLQueryText(cn, cmd);
+                    DataSet ds = cn.SQLQueryText( cmd);
 
                     if (ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
                         return list;
@@ -1125,7 +1153,7 @@ namespace EliteDangerousCore
                         cmd.AddParameterWithValue("@cmd", currentcmdrid);
                     }
 
-                    SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                    cn.SQLNonQueryText( cmd);
                 }
             }
         }
@@ -1156,7 +1184,17 @@ namespace EliteDangerousCore
 
         static public JournalEntry CreateJournalEntry(string text)
         {
-            JObject jo = (JObject)JObject.Parse(text);
+            JObject jo;
+
+            try
+            {
+                jo = (JObject)JObject.Parse(text);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error parsing journal entry\n{text}\n{ex.ToString()}");
+                return new JournalUnknown(new JObject());
+            }
 
             return CreateJournalEntry(jo);
         }
@@ -1180,7 +1218,6 @@ namespace EliteDangerousCore
                     ret = (JournalEntry)Activator.CreateInstance(jtype, jo);
             }
 
-            ret.EventSummaryName = ret.FillSummary;     // after creation, so journal fields are populated.
             return ret;
         }
 

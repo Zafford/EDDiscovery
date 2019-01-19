@@ -49,6 +49,7 @@ namespace EDDiscovery.UserControls
         private HistoryList current_historylist;        // the last one set, for internal refresh purposes on sort
 
         public event ChangedSelectionHEHandler OnTravelSelectionChanged;   // as above, different format, for certain older controls
+
         public HistoryEntry GetCurrentHistoryEntry { get { return dataGridViewJournal.CurrentCell != null ? dataGridViewJournal.Rows[dataGridViewJournal.CurrentCell.RowIndex].Cells[JournalHistoryColumns.HistoryTag].Tag as HistoryEntry : null; } }
 
 
@@ -81,7 +82,7 @@ namespace EDDiscovery.UserControls
             dataGridViewJournal.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dataGridViewJournal.RowTemplate.Height = 26;
             dataGridViewJournal.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;     // NEW! appears to work https://msdn.microsoft.com/en-us/library/74b2wakt(v=vs.110).aspx
-            cfs.ConfigureThirdOption("Travel".Tx(), "Docked;FSD Jump;Undocked;");
+            cfs.AddStandardExtraOptions();
             cfs.Changed += EventFilterChanged;
             TravelHistoryFilter.InitaliseComboBox(comboBoxJournalWindow, DbHistorySave);
 
@@ -625,9 +626,12 @@ namespace EDDiscovery.UserControls
                                 if (dgvr.Visible && he.EventTimeLocal.CompareTo(frm.StartTime) >= 0 && he.EventTimeLocal.CompareTo(frm.EndTime) <= 0)
                                 {
                                     string forExport = he.journalEntry.GetJson()?.ToString().Replace("\r\n", "");
-                                    forExport = System.Text.RegularExpressions.Regex.Replace(forExport, "(\"(?:[^\"\\\\]|\\\\.)*\")|\\s+", "$1");
-                                    writer.Write(forExport);
-                                    writer.WriteLine();
+                                    if (forExport != null)
+                                    {
+                                        forExport = System.Text.RegularExpressions.Regex.Replace(forExport, "(\"(?:[^\"\\\\]|\\\\.)*\")|\\s+", "$1");
+                                        writer.Write(forExport);
+                                        writer.WriteLine();
+                                    }
                                 }
                             }
                         }

@@ -1,5 +1,6 @@
 ﻿using EliteDangerousCore.DB;
 using Newtonsoft.Json.Linq;
+using SQLLiteExtensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -27,10 +28,10 @@ namespace EliteDangerousCore.EDDB
 
             while (!sr.EndOfStream)
             {
-                using (SQLiteTxnLockED<SQLiteConnectionSystem> tl = new SQLiteTxnLockED<SQLiteConnectionSystem>())
+                using (SQLExtTransactionLock<SQLiteConnectionSystem> tl = new SQLExtTransactionLock<SQLiteConnectionSystem>())
                 {
                     tl.OpenWriter();
-                    using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: EDDbAccessMode.Writer))  // open the db
+                    using (SQLiteConnectionSystem cn = new SQLiteConnectionSystem(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Writer))  // open the db
                     {
                         DbCommand selectCmd = null;
                         DbCommand insertCmd = null;
@@ -165,7 +166,7 @@ namespace EliteDangerousCore.EDDB
 
                                         if (++c % 10000 == 0)
                                         {
-                                            Console.WriteLine("EDDB Count " + c + " Delta " + (Environment.TickCount - lasttc) + " info " + hasinfo + " update " + updated + " new " + inserted);
+                                            System.Diagnostics.Trace.WriteLine("EDDB Count " + c + " Delta " + (Environment.TickCount - lasttc) + " info " + hasinfo + " update " + updated + " new " + inserted);
                                             lasttc = Environment.TickCount;
                                         }
                                     }
@@ -216,7 +217,8 @@ namespace EliteDangerousCore.EDDB
 
             string systemFileName = Path.Combine(eddbdir, "systems_populated.jsonl");
 
-            bool success = BaseUtils.DownloadFileHandler.DownloadFile("http://robert.astronet.se/Elite/eddb/v5/systems_populated.jsonl", systemFileName);
+            //"http://robert.astronet.se/Elite/eddb/v5/systems_populated.jsonl"
+            bool success = BaseUtils.DownloadFileHandler.DownloadFile(EliteConfigInstance.InstanceConfig.EDDBSystemsURL, systemFileName);
 
             if (success)
             {

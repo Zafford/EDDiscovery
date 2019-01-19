@@ -54,10 +54,11 @@ namespace EDDiscovery.UserControls
         const int BitSelGameMode = 15;
         const int BitSelTravel = 16;
         const int BitSelMissions = 17;
+        const int BitSelJumpRange = 18;
 
-        int[] SmallItems = new int[] {BitSelFuel,BitSelCargo,BitSelVisits, BitSelMats, BitSelData , BitSelCredits };
+        int[] SmallItems = new int[] {BitSelFuel,BitSelCargo,BitSelVisits, BitSelMats, BitSelData , BitSelCredits, BitSelJumpRange};
 
-        const int BitSelTotal = 18;
+        const int BitSelTotal = 19;
         const int Positions = BitSelTotal * 2;      // two columns of positions, one at 0, one at +300 pixels ish, 
         const int BitSelEDSMButtonsNextLine = 28;
         const int BitSelSkinny = 29;
@@ -86,7 +87,9 @@ namespace EDDiscovery.UserControls
                                                         toolStripSystemState, toolStripNotes, toolStripTarget,
                                                         toolStripShip, toolStripFuel , toolStripCargo, toolStripMaterialCounts,  toolStripDataCount,
                                                         toolStripCredits,
-                                                        toolStripGameMode,toolStripTravel, toolStripMissionList };
+                                                        toolStripGameMode,toolStripTravel, toolStripMissionList,
+                                                        toolStripJumpRange};
+            Debug.Assert(toolstriplist.Length == BitSelTotal);
 
             Selection = SQLiteDBClass.GetSettingInt(DbSelection, BitSelDefault);
             string rs = SQLiteDBClass.GetSettingString(DbOSave, "-");
@@ -262,15 +265,28 @@ namespace EDDiscovery.UserControls
                 textBoxData.Text = he.MaterialCommodity.DataCount.ToStringInvariant();
                 textBoxCredits.Text = he.Credits.ToString("N0");
 
+                textBoxJumpRange.Text = "";
+
                 if (he.ShipInformation != null)
                 {
-                    textBoxShip.Text = he.ShipInformation.ShipFullInfo(cargo: false, fuel: false);
-                    if (he.ShipInformation.FuelCapacity > 0 && he.ShipInformation.FuelLevel > 0)
-                        textBoxFuel.Text = he.ShipInformation.FuelLevel.ToStringInvariant("0.#") + "/" + he.ShipInformation.FuelCapacity.ToStringInvariant("0.#");
-                    else if (he.ShipInformation.FuelCapacity > 0)
-                        textBoxFuel.Text = he.ShipInformation.FuelCapacity.ToStringInvariant("0.#");
+                    ShipInformation si = he.ShipInformation;
+
+                    textBoxShip.Text = si.ShipFullInfo(cargo: false, fuel: false);
+                    if (si.FuelCapacity > 0 && si.FuelLevel > 0)
+                        textBoxFuel.Text = si.FuelLevel.ToStringInvariant("0.#") + "/" + si.FuelCapacity.ToStringInvariant("0.#");
+                    else if (si.FuelCapacity > 0)
+                        textBoxFuel.Text = si.FuelCapacity.ToStringInvariant("0.#");
                     else
                         textBoxFuel.Text = "N/A".Tx(this,"NA");
+
+                    EliteDangerousCalculations.FSDSpec fsd = si.GetFSDSpec();
+                    if ( fsd != null )
+                    {
+                        EliteDangerousCalculations.FSDSpec.JumpInfo ji = fsd.GetJumpInfo(he.MaterialCommodity.CargoCount, 
+                                                                    si.ModuleMass() + si.HullMass(), si.FuelCapacity, si.FuelCapacity / 2);
+
+                        textBoxJumpRange.Text = ji.cursinglejump.ToString("N1") + "ly";
+                    }
                 }
                 else
                     textBoxShip.Text = textBoxFuel.Text = "";
@@ -307,7 +323,7 @@ namespace EDDiscovery.UserControls
         private void buttonEDDB_Click(object sender, EventArgs e)
         {
             if (last_he != null && last_he.System.EDDBID > 0)
-                Process.Start("http://eddb.io/system/" + last_he.System.EDDBID.ToString());
+                Process.Start(Properties.Resources.URLEDDBSystem + last_he.System.EDDBID.ToString());
         }
 
         private void buttonRoss_Click(object sender, EventArgs e)
@@ -317,7 +333,7 @@ namespace EDDiscovery.UserControls
                 discoveryform.history.FillEDSM(last_he);
 
                 if (last_he.System.EDDBID > 0)
-                    Process.Start("http://ross.eddb.io/system/update/" + last_he.System.EDDBID.ToString());
+                    Process.Start(Properties.Resources.URLRossSystem + last_he.System.EDDBID.ToString());
             }
         }
 
@@ -489,6 +505,11 @@ namespace EDDiscovery.UserControls
             ToggleSelection(sender, BitSelFuel);
         }
 
+        private void displayJumpRangeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ToggleSelection(sender, BitSelJumpRange);
+        }
+
         private void toolStripMissionsList_Click(object sender, EventArgs e)
         {
             ToggleSelection(sender, BitSelMissions);
@@ -557,7 +578,7 @@ namespace EDDiscovery.UserControls
 
                     int bitno = Lines[r].Items[c]-1;    // stored +1
 
-                    if (bitno >= 0)
+                    if (bitno >= 0 && bitno < toolstriplist.Length)     // ensure within range, ignore any out of range, in case going backwards in versions
                     {
                         bool ison = (Selection & (1 << bitno)) != 0;
 
@@ -680,6 +701,10 @@ namespace EDDiscovery.UserControls
                                     this.SetPos(ref labpos, labelMissions, datapos, richTextBoxScrollMissions, richTextBoxScrollMissions.Height + 8, si);
                                     break;
 
+                                case BitSelJumpRange:
+                                    this.SetPos(ref labpos, labelJumpRange, datapos, textBoxJumpRange, vspacing, si);
+                                    break;
+
                                 default:
                                     System.Diagnostics.Debug.WriteLine("Ignoring unknown type");
                                     break;
@@ -718,7 +743,7 @@ namespace EDDiscovery.UserControls
             Lines[BitSelCredits].Items[0] = 0;
 
             BaseUtils.LineStore.CompressOrder(Lines);
-            BaseUtils.LineStore.DumpOrder(Lines, "Reset");
+            //BaseUtils.LineStore.DumpOrder(Lines, "Reset");
         }
 
         void SetPos(ref Point lp, Label lab, Point tp, ExtendedControls.TextBoxBorder box, int vspacing , int i )
@@ -870,7 +895,7 @@ namespace EDDiscovery.UserControls
                     Lines[fromrow].Items[fromcol] = -1;
 
                     BaseUtils.LineStore.CompressOrder(Lines);
-                    BaseUtils.LineStore.DumpOrder(Lines, "Move");
+                   // BaseUtils.LineStore.DumpOrder(Lines, "Move");
 
                     UpdateViewOnSelection();
                     Cursor.Current = Cursors.Default;
@@ -942,5 +967,6 @@ namespace EDDiscovery.UserControls
 
         #endregion
 
+        
     }
 }

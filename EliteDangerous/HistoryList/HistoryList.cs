@@ -211,6 +211,14 @@ namespace EliteDangerousCore
             }
         }
 
+        public List<HistoryEntry> FilterByScan
+        {
+            get
+            {
+                return (from s in historylist where s.journalEntry.EventTypeID == JournalTypeEnum.Scan select s).ToList();
+            }
+        }
+
         public HistoryEntry GetByJID(long jid)
         {
             return historylist.Find(x => x.Journalid == jid);
@@ -330,14 +338,34 @@ namespace EliteDangerousCore
 
         public int GetNrScans(DateTime start, DateTime to)
         {
-            return (from s in historylist where s.journalEntry.EventTypeID == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to select s).Count();
+            return (from s in historylist where s.journalEntry.EventTypeID == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to select s.journalEntry as JournalScan)
+                .Distinct(new ScansAreForSameBody()).Count();
+        }
+
+        public int GetNrMapped(DateTime start, DateTime to)
+        {
+            return (from s in historylist where s.journalEntry.EventTypeID == JournalTypeEnum.SAAScanComplete && s.EventTimeLocal >= start && s.EventTimeLocal < to select s).Count();
         }
 
         public long GetScanValue(DateTime start, DateTime to)
         {
-            var list = (from s in historylist where s.EntryType == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to select s.journalEntry as JournalScan).ToList<JournalScan>();
+            var scans = historylist
+                .Where(s => s.EntryType == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to)
+                .Select(h => h.journalEntry as JournalScan)
+                .Distinct(new ScansAreForSameBody()).ToList();
 
-            return (from t in list select (long)t.EstimatedValue).Sum();
+            var mappings = historylist.Where(s => s.EntryType == JournalTypeEnum.SAAScanComplete).Select(h => h.journalEntry as JournalSAAScanComplete).ToList();
+
+            long total = scans.Select(scan =>
+            {
+                var mapping = mappings.FirstOrDefault(m => m.BodyName == scan.BodyName);
+                if (mapping == null)
+                    return (long)scan.EstimateScanValue(false, false);
+                else
+                    return (long)scan.EstimateScanValue(true, mapping.ProbesUsed <= mapping.EfficiencyTarget);
+            }).Sum();
+
+            return total;
         }
 
         public int GetDocked(DateTime start, DateTime to)
@@ -412,7 +440,8 @@ namespace EliteDangerousCore
 
         public List<JournalScan> GetScanList(DateTime start, DateTime to)
         {
-            return (from s in historylist where s.EntryType == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to select s.journalEntry as JournalScan).ToList<JournalScan>();
+            return (from s in historylist where s.EntryType == JournalTypeEnum.Scan && s.EventTimeLocal >= start && s.EventTimeLocal < to select s.journalEntry as JournalScan)
+                .Distinct(new ScansAreForSameBody()).ToList();
         }
 
         public int GetTonnesBought(string forShipKey)
@@ -436,7 +465,8 @@ namespace EliteDangerousCore
 
         public int GetBodiesScanned(string forShipKey)
         {
-            return (from s in historylist where s.EntryType == JournalTypeEnum.Scan && $"{s.ShipTypeFD.ToLowerInvariant()}:{s.ShipId}" == forShipKey select s).Count();
+            return (from s in historylist where s.EntryType == JournalTypeEnum.Scan && $"{s.ShipTypeFD.ToLowerInvariant()}:{s.ShipId}" == forShipKey select s.journalEntry as JournalScan)
+                .Distinct(new ScansAreForSameBody()).Count();
         }
 
         public int GetFSDJumpsBeforeUTC(DateTime utc)
@@ -944,6 +974,7 @@ namespace EliteDangerousCore
                 var list = (essentialitems == nameof(JournalEntry.JumpScanEssentialEvents)) ? JournalEntry.JumpScanEssentialEvents :
                            (essentialitems == nameof(JournalEntry.JumpEssentialEvents)) ? JournalEntry.JumpEssentialEvents :
                            (essentialitems == nameof(JournalEntry.NoEssentialEvents)) ? JournalEntry.NoEssentialEvents :
+                           (essentialitems == nameof(JournalEntry.FullStatsEssentialEvents)) ? JournalEntry.FullStatsEssentialEvents :
                             JournalEntry.EssentialEvents;
 
                 jlist = JournalEntry.GetAll(CurrentCommander, 
@@ -1087,7 +1118,7 @@ namespace EliteDangerousCore
             }
         }
 
-        public static int MergeTypeDelay(JournalEntry je)   //0 = none
+        public static int MergeTypeDelay(JournalEntry je)   // 0 = no delay, delay for attempts to merge items..
         {
             if (je.EventTypeID == JournalTypeEnum.Friends)
                 return 2000;
@@ -1095,6 +1126,8 @@ namespace EliteDangerousCore
                 return 2000;
             else if (je.EventTypeID == JournalTypeEnum.FuelScoop)
                 return 10000;
+            else if (je.EventTypeID == JournalTypeEnum.ShipTargeted)
+                return 250; // short, so normally does not merge unless your clicking around like mad
             else
                 return 0;
         }
@@ -1104,29 +1137,61 @@ namespace EliteDangerousCore
         {
             if (prev != null)
             {
-                if (je.EventTypeID == JournalTypeEnum.FuelScoop && prev.EventTypeID == JournalTypeEnum.FuelScoop)  // merge scoops
+                bool prevsame = je.EventTypeID == prev.EventTypeID;
+
+                if (prevsame)
                 {
-                    EliteDangerousCore.JournalEvents.JournalFuelScoop jfs = je as EliteDangerousCore.JournalEvents.JournalFuelScoop;
-                    EliteDangerousCore.JournalEvents.JournalFuelScoop jfsprev = prev as EliteDangerousCore.JournalEvents.JournalFuelScoop;
-                    jfsprev.Scooped += jfs.Scooped;
-                    jfsprev.Total = jfs.Total;
-                    //System.Diagnostics.Debug.WriteLine("Merge FS " + jfsprev.EventTimeUTC);
-                    return true;
-                }
-                else if (je.EventTypeID == JournalTypeEnum.Friends && prev.EventTypeID == JournalTypeEnum.Friends) // merge friends
-                {
-                    EliteDangerousCore.JournalEvents.JournalFriends jfprev = prev as EliteDangerousCore.JournalEvents.JournalFriends;
-                    EliteDangerousCore.JournalEvents.JournalFriends jf = je as EliteDangerousCore.JournalEvents.JournalFriends;
-                    jfprev.AddFriend(jf);
-                    //System.Diagnostics.Debug.WriteLine("Merge Friends " + jfprev.EventTimeUTC + " " + jfprev.NameList.Count);
-                    return true;
-                }
-                else if (je.EventTypeID == JournalTypeEnum.FSSSignalDiscovered && prev.EventTypeID == JournalTypeEnum.FSSSignalDiscovered) // merge friends
-                {
-                    var jdprev = prev as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
-                    var jd = je as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
-                    jdprev.Add(jd);
-                    return true;
+                    if (je.EventTypeID == JournalTypeEnum.FuelScoop )  // merge scoops
+                    {
+                        EliteDangerousCore.JournalEvents.JournalFuelScoop jfs = je as EliteDangerousCore.JournalEvents.JournalFuelScoop;
+                        EliteDangerousCore.JournalEvents.JournalFuelScoop jfsprev = prev as EliteDangerousCore.JournalEvents.JournalFuelScoop;
+                        jfsprev.Scooped += jfs.Scooped;
+                        jfsprev.Total = jfs.Total;
+                        //System.Diagnostics.Debug.WriteLine("Merge FS " + jfsprev.EventTimeUTC);
+                        return true;
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.Friends ) // merge friends
+                    {
+                        EliteDangerousCore.JournalEvents.JournalFriends jfprev = prev as EliteDangerousCore.JournalEvents.JournalFriends;
+                        EliteDangerousCore.JournalEvents.JournalFriends jf = je as EliteDangerousCore.JournalEvents.JournalFriends;
+                        jfprev.AddFriend(jf);
+                        //System.Diagnostics.Debug.WriteLine("Merge Friends " + jfprev.EventTimeUTC + " " + jfprev.NameList.Count);
+                        return true;
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.FSSSignalDiscovered ) 
+                    {
+                        var jdprev = prev as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
+                        var jd = je as EliteDangerousCore.JournalEvents.JournalFSSSignalDiscovered;
+                        jdprev.Add(jd);
+                        return true;
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.ShipTargeted ) 
+                    {
+                        var jdprev = prev as EliteDangerousCore.JournalEvents.JournalShipTargeted;
+                        var jd = je as EliteDangerousCore.JournalEvents.JournalShipTargeted;
+                        jdprev.Add(jd);
+                        return true;
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.UnderAttack)     // not merged during play
+                    {
+                        var jdprev = prev as EliteDangerousCore.JournalEvents.JournalUnderAttack;
+                        var jd = je as EliteDangerousCore.JournalEvents.JournalUnderAttack;
+                        jdprev.Add(jd.Target);
+                        return true;
+                    }
+                    else if (je.EventTypeID == JournalTypeEnum.ReceiveText)     // not merged during play
+                    {
+                        var jdprev = prev as EliteDangerousCore.JournalEvents.JournalReceiveText;
+                        var jd = je as EliteDangerousCore.JournalEvents.JournalReceiveText;
+
+                        // merge if same channel 
+                        if (jd.Channel == jdprev.Channel )
+                        {
+                            jdprev.Add(jd);
+                            return true;
+                        }
+                    }
+
                 }
             }
 

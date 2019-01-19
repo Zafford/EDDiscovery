@@ -106,8 +106,8 @@ namespace EDDiscovery.UserControls
             comboBoxCustomHistoryLoadTime.SelectedIndex = ix >= 0 ? ix : 0;
             comboBoxCustomHistoryLoadTime.SelectedIndexChanged += ComboBoxCustomHistoryLoadTime_SelectedIndexChanged;
 
-            var eetn = new string[] { nameof(JournalEntry.EssentialEvents) , nameof(JournalEntry.JumpScanEssentialEvents), nameof(JournalEntry.JumpEssentialEvents), nameof(JournalEntry.NoEssentialEvents)};
-            comboBoxCustomEssentialEntries.Items = new string[] { "Scans,Cargo,Missions,State,Jumps etc".Tx(this, "ESM"), "Jumps and Scans".Tx(this, "EJS"), "Jumps".Tx(this, "EJ"), "Nothing".Tx(this, "EN") };
+            var eetn = new string[] { nameof(JournalEntry.EssentialEvents), nameof(JournalEntry.FullStatsEssentialEvents) , nameof(JournalEntry.JumpScanEssentialEvents), nameof(JournalEntry.JumpEssentialEvents), nameof(JournalEntry.NoEssentialEvents)};
+            comboBoxCustomEssentialEntries.Items = new string[] { "Scans,Cargo,Missions,State,Jumps etc".Tx(this, "ESM"), "All entries for Statistics".Tx(this, "FS"), "Jumps and Scans".Tx(this, "EJS"), "Jumps".Tx(this, "EJ"), "Nothing".Tx(this, "EN") };
             comboBoxCustomEssentialEntries.Tag = eetn;
             ix = Array.FindIndex(eetn, x => x == EDDConfig.Instance.EssentialEventTypes);
             comboBoxCustomEssentialEntries.SelectedIndex = ix >= 0 ? ix : 0;
@@ -278,7 +278,9 @@ namespace EDDiscovery.UserControls
                       ("The font used by this theme is not available on your system." + Environment.NewLine +
                       "The font needed is \"{0}\"." + Environment.NewLine +
                       "Install this font to fully use this theme." + Environment.NewLine +
-                      "Euro Caps font is freely available from www.edassets.org." + Environment.NewLine + Environment.NewLine +
+                      "Euro Caps font is freely available from www.edassets.org." + Environment.NewLine +
+                      "and is in your install folder " + Path.GetDirectoryName(Application.ExecutablePath) + " - install it manually" + Environment.NewLine +
+                      Environment.NewLine +
                       "Would you like to load this theme using a replacement font?").Tx(this, "Font"), fontwanted);
 
                 DialogResult res = ExtendedControls.MessageBoxTheme.Show(FindForm(), warning, "Warning".Tx(), MessageBoxButtons.YesNo);

@@ -169,6 +169,7 @@ namespace EDDiscovery.Icons
         public static Image Scan_Bodies_HighValue { get { return IconSet.GetIcon("Controls.Scan.Bodies.HighValue"); } }
         public static Image Scan_Bodies_Terraformable { get { return IconSet.GetIcon("Controls.Scan.Bodies.Terraformable"); } }
         public static Image Scan_Bodies_Volcanism { get { return IconSet.GetIcon("Controls.Scan.Bodies.Volcanism"); } }
+        public static Image Scan_Bodies_Mapped { get { return IconSet.GetIcon("Controls.Scan.Bodies.Mapped"); } }
         public static Image Scan_Bodies_RingOnly { get { return IconSet.GetIcon("Controls.Scan.Bodies.RingOnly"); } }
         public static Image Scan_Bodies_RingGap { get { return IconSet.GetIcon("Controls.Scan.Bodies.RingGap"); } }
         public static Image Scan_Bodies_MaterialMore { get { return IconSet.GetIcon("Controls.Scan.Bodies.MaterialMore"); } }
@@ -244,10 +245,12 @@ namespace EDDiscovery.Icons
         public static Image Bookmarks_Edit { get { return IconSet.GetIcon("Controls.Bookmarks.Edit"); } }
         public static Image Bookmarks_New { get { return IconSet.GetIcon("Controls.Bookmarks.New"); } }
         public static Image Bookmarks_Delete { get { return IconSet.GetIcon("Controls.Bookmarks.Delete"); } }
+        public static Image ImportExcel { get { return IconSet.GetIcon("Controls.Bookmarks.ImportExcel"); } }
         #endregion
         #region EDDiscovery.UserControls.Search
         public static Image SearchStars { get { return IconSet.GetIcon("Controls.Search.SearchStars"); } }
         public static Image SearchMaterials { get { return IconSet.GetIcon("Controls.Search.SearchMaterials"); } }
+        public static Image SearchScan { get { return IconSet.GetIcon("Controls.Search.Scan"); } }
         #endregion
 
     }

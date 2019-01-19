@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace EliteDangerousCore.JournalEvents
@@ -81,14 +82,38 @@ namespace EliteDangerousCore.JournalEvents
         public string SubSystem { get; set; }           // 3 null
         public double? SubSystemHealth { get; set; }    // 3 null
 
+        public List<JournalShipTargeted> MergedEntries { get; set; }    // if verbose.. doing it this way does not break action packs as the variables are maintained
+                                                                    // This is second, third merge etc.  First one is in above variables
+
+        public void Add(JournalShipTargeted next)
+        {
+            if (MergedEntries == null)
+                MergedEntries = new List<JournalShipTargeted>();
+            MergedEntries.Add(next);
+        }
+
         public override void FillInformation(out string info, out string detailed)
         {
+            detailed = "";
+            if (MergedEntries == null)
+                info = ToString();
+            else
+            {
+                info = (MergedEntries.Count() + 1).ToString() + " Target Events".Tx(this,"MC");
+                for (int i = MergedEntries.Count - 1; i >= 0; i--)
+                    detailed = detailed.AppendPrePad(MergedEntries[i].ToString(), System.Environment.NewLine);
+                detailed = detailed.AppendPrePad(ToString(), System.Environment.NewLine);   // ours is the last one
+            }
+        }
+
+        public override string ToString()
+        {
+            string info;
             if (TargetLocked)
             {
                 if (ScanStage == null)
                 {
                     info = "Missing Scan Stage - report to EDD team";
-
                 }
                 else if (ScanStage.Value == 0)
                 {
@@ -100,17 +125,20 @@ namespace EliteDangerousCore.JournalEvents
                 }
                 else if (ScanStage.Value == 2)
                 {
-                    info = BaseUtils.FieldBuilder.Build("Shield ;;N1".Txb(this), ShieldHealth, "Hull ;;N1".Tx(this), HullHealth,
-                        "", PilotName_Localised, "Rank:".Txb(this), PilotRank, "< in ".Tx(this), Ship_Localised);
+                    info = BaseUtils.FieldBuilder.Build(
+                        "", PilotName_Localised, "Rank:".Txb(this), PilotRank, "< in ".Tx(this), Ship_Localised,
+                        "Shield ;;N1".Txb(this), ShieldHealth, "Hull ;;N1".Tx(this), HullHealth);
+                        
 
                 }
                 else if (ScanStage.Value == 3)
                 {
-                    info = BaseUtils.FieldBuilder.Build("Faction:".Txb(this), Faction,
-                                    "", LegalStatus, "Bounty:; cr;N0".Txb(this), Bounty,
-                                    "", SubSystem, "< at ;;N1".Tx(this), SubSystemHealth,
+                    info = BaseUtils.FieldBuilder.Build(
+                                    "", PilotName_Localised, "<(;)", LegalStatus, "Rank:".Txb(this), PilotRank, "< in ".Tx(this), Ship_Localised,
                                     "Shield ;;N1".Txb(this), ShieldHealth, "Hull ;;N1".Tx(this), HullHealth,
-                                    "", PilotName_Localised, " " + "Rank:".Txb(this), PilotRank, "< in ".Tx(this), Ship_Localised);
+                                    "Bounty:; cr;N0".Txb(this), Bounty, 
+                                    "", SubSystem, "< at ;;N1".Tx(this), SubSystemHealth
+                                    );
                 }
                 else
                     info = "Unknown Scan Stage type - report to EDD team";
@@ -118,7 +146,7 @@ namespace EliteDangerousCore.JournalEvents
             else
                 info = "Lost Target".Txb(this);
 
-            detailed = "";
+            return info;
         }
 
     }
@@ -132,12 +160,31 @@ namespace EliteDangerousCore.JournalEvents
             Target = evt["Target"].Str();
         }
 
-        public string Target { get; set; }
+        public string Target { get; set; }                  // always first one if merged list.
+        public List<string> MergedEntries { get; set; }     // if verbose.. doing it this way does not break action packs as the variables are maintained
+                                                            // This is second, third merge etc.  First one is in above variables
 
         public override void FillInformation(out string info, out string detailed)
         {
-            info = BaseUtils.FieldBuilder.Build("", Target);
             detailed = "";
+            if (MergedEntries != null)
+            {
+                info = (MergedEntries.Count+1).ToString("N0") + " " + "times".Tx(this, "ACOUNT");
+                for (int i = MergedEntries.Count - 1; i >= 0; i--)
+                    detailed = detailed.AppendPrePad(MergedEntries[i], System.Environment.NewLine);
+                detailed = detailed.AppendPrePad(Target, System.Environment.NewLine);   // ours is the last one
+            }
+            else
+            {
+                info = BaseUtils.FieldBuilder.Build("", Target);
+            }
+        }
+
+        public void Add( string target )
+        {
+            if (MergedEntries == null)
+                MergedEntries = new List<string>();
+            MergedEntries.Add(target);    // first is second oldest, etc
         }
 
     }

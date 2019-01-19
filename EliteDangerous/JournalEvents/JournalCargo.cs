@@ -61,7 +61,7 @@ namespace EliteDangerousCore.JournalEvents
         {
             if (Inventory == null)  // so, if cargo contained info, we use that.. else we try for cargo.json.
             {
-                System.Diagnostics.Debug.WriteLine("Cargo with no data, checking file.." + historyrefreshparse);
+                //System.Diagnostics.Debug.WriteLine("Cargo with no data, checking file.." + historyrefreshparse);
 
                 JObject jnew = ReadAdditionalFile(System.IO.Path.Combine(directory, "Cargo.json"), waitforfile: !historyrefreshparse, checktimestamptype: true);  // check timestamp..
                 if (jnew != null)        // new json, rescan. returns null if cargo in the folder is not related to this entry by time.
@@ -73,7 +73,7 @@ namespace EliteDangerousCore.JournalEvents
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Cargo with with data, no need to check file.." + historyrefreshparse);
+                //System.Diagnostics.Debug.WriteLine("Cargo with with data, no need to check file.." + historyrefreshparse);
                 return true;
             }
         }
@@ -172,7 +172,7 @@ namespace EliteDangerousCore.JournalEvents
     }
 
     [JournalEntryType(JournalTypeEnum.CargoDepot)]
-    public class JournalCargoDepot : JournalEntry, IMaterialCommodityJournalEntry
+    public class JournalCargoDepot : JournalEntry, IMaterialCommodityJournalEntry, IMissions
     {
         public JournalCargoDepot(JObject evt) : base(evt, JournalTypeEnum.CargoDepot)
         {
@@ -223,9 +223,13 @@ namespace EliteDangerousCore.JournalEvents
                 mc.Change(MaterialCommodityData.CommodityCategory, CargoType, (UpdateEnum == UpdateTypeEnum.Collect) ? Count : -Count, 0, conn);
         }
 
+        public void UpdateMissions(MissionListAccumulator mlist, EliteDangerousCore.ISystem sys, string body, DB.SQLiteConnectionUser conn)
+        {
+            mlist.CargoDepot(this);
+        }
+
         public override void FillInformation(out string info, out string detailed)
         {
-
             if (UpdateEnum == UpdateTypeEnum.Collect)
             {
                 info = BaseUtils.FieldBuilder.Build("Collected:".Txb(this), Count, "< of ".Txb(this), FriendlyCargoType, "Total:".Txb(this), ItemsDelivered, "To Go:", ItemsToGo, "Progress:;%;N1".Txb(this), ProgressPercent);

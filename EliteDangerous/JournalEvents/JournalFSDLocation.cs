@@ -32,8 +32,8 @@ namespace EliteDangerousCore.JournalEvents
         public long? SystemAddress { get; set; }
         public bool StarPosFromEDSM { get; set; }
 
-        public string Faction { get; set; }
-        public string FactionState { get; set; }
+        public string Faction { get; set; }         // System Faction
+        public string FactionState { get; set; }    
         public string Allegiance { get; set; }
         public string Economy { get; set; }
         public string Economy_Localised { get; set; }
@@ -116,7 +116,7 @@ namespace EliteDangerousCore.JournalEvents
             SystemAddress = evt["SystemAddress"].LongNull();
 
             Faction = JSONObjectExtensions.GetMultiStringDef(evt, new string[] { "SystemFaction", "Faction" });
-            FactionState = evt["FactionState"].Str();           // PRE 2.3 .. not present in newer files, fixed up in next bit of code
+            FactionState = evt["FactionState"].Str();           // PRE 2.3 .. not present in newer files, fixed up in next bit of code (but see 3.3.2 as its been incorrectly reintroduced)
             Factions = evt["Factions"]?.ToObjectProtected<FactionInformation[]>()?.OrderByDescending(x => x.Influence)?.ToArray();  // POST 2.3
 
             if (Factions != null)
@@ -248,6 +248,14 @@ namespace EliteDangerousCore.JournalEvents
             Longitude = evt["Longitude"].DoubleNull();
 
             MarketID = evt["MarketID"].LongNull();
+
+            StationFaction = evt["StationFaction"].Str();       // 3.3.2 empty before
+            StationGovernment = evt["StationGovernment"].Str();       // 3.3.2 empty before
+            StationGovernment_Localised = evt["StationGovernment_Localised"].Str();       // 3.3.2 empty before
+            StationAllegiance = evt["StationAllegiance"].Str();       // 3.3.2 empty before
+                                                                      // tbd bug in journal over FactionState - its repeated twice..
+            StationServices = evt["StationServices"]?.ToObjectProtected<string[]>();
+            StationEconomyList = evt["StationEconomies"]?.ToObjectProtected<JournalDocked.Economies[]>();
         }
 
         public bool Docked { get; set; }
@@ -263,7 +271,15 @@ namespace EliteDangerousCore.JournalEvents
 
         public long? MarketID { get; set; }
 
-        public override string FillSummary { get
+        // 3.3.2 will be empty/null for previous logs.
+        public string StationFaction { get; set; }
+        public string StationGovernment { get; set; }
+        public string StationGovernment_Localised { get; set; }
+        public string StationAllegiance { get; set; }
+        public string[] StationServices { get; set; }
+        public JournalDocked.Economies[] StationEconomyList { get; set; }        // may be null
+
+        public override string SummaryName(ISystem sys) 
             {
                 if (Docked)
                     return string.Format("At {0}".Tx(this, "AtStat"), StationName);
@@ -271,7 +287,7 @@ namespace EliteDangerousCore.JournalEvents
                     return string.Format("Landed on {0}".Tx(this, "LND"), Body);
                 else
                     return string.Format("At {0}".Tx(this, "AtStar"), StarSystem);
-            } }
+            }
 
         public override void FillInformation(out string info, out string detailed) 
         {
@@ -369,7 +385,7 @@ namespace EliteDangerousCore.JournalEvents
         public bool RealJournalEvent { get; private set; } // True if real ED 2.2+ journal event and not pre 2.2 imported.
         public bool EDSMFirstDiscover { get; set; }
 
-        public override string FillSummary { get { return string.Format("Jump to {0}".Tx(this), StarSystem); } }
+        public override string SummaryName(ISystem sys) { return string.Format("Jump to {0}".Tx(this), StarSystem); }
 
         public override void FillInformation(out string info, out string detailed)
         {
@@ -527,7 +543,7 @@ namespace EliteDangerousCore.JournalEvents
         public string StarClass { get; set; }
         public string FriendlyStarClass { get; set; }
 
-        public override string FillSummary { get { return "Charging FSD".Tx(this); } }
+        public override string SummaryName(ISystem sys) { return "Charging FSD".Tx(this); }
 
         public override void FillInformation(out string info, out string detailed)
         {

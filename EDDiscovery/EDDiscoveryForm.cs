@@ -31,7 +31,6 @@ using System.Windows.Forms;
 using EliteDangerousCore;
 using EliteDangerousCore.DB;
 using EliteDangerousCore.JournalEvents;
-using EliteDangerous.CompanionAPI;
 using EDDiscovery.Icons;
 
 namespace EDDiscovery
@@ -56,8 +55,6 @@ namespace EDDiscovery
 
         public ScreenShots.ScreenShotConverter screenshotconverter;
 
-       // public EliteDangerousCore.CompanionAPI.CompanionAPIClass Capi { get; private set; } = new EliteDangerousCore.CompanionAPI.CompanionAPIClass();
-
         public EDDiscovery._3DMap.MapManager Map { get; private set; }
 
         Task checkInstallerTask = null;
@@ -74,8 +71,6 @@ namespace EDDiscovery
         public event Action<Object> OnNewTarget;
         public event Action<Object, HistoryEntry, bool> OnNoteChanged;  // UI.Note has been updated attached to this note
         public event Action<List<ISystem>> OnNewCalculatedRoute;        // route plotter has a new one
-        public event Action<List<string>> OnNewStarsForExpedition;      // add stars to expedition 
-        public event Action<List<string>, bool> OnNewStarsForTrilat;    // add stars to trilat (false distance, true wanted)
         public event Action OnAddOnsChanged;                            // add on changed
         public event Action<int,string> OnEDSMSyncComplete;             // EDSM Sync has completed with this list of stars are newly created
         public event Action<int> OnEDDNSyncComplete;                    // Sync has completed
@@ -143,6 +138,11 @@ namespace EDDiscovery
 
             Controller.OnNewEntrySecond += Controller_NewEntrySecond;       // called after UI updates themselves with NewEntry
             Controller.OnNewUIEvent += Controller_NewUIEvent;       // called if its an UI event
+
+            //if (File.Exists(Path.Combine(EDDOptions.ExeDirectory(), "EUROCAPS.TTF")))     // removed for now, since the font dialogs don't allow us to pick this local font.. yet
+            //{
+            //    BaseUtils.FontLoader.AddFontFile(Path.Combine(EDDOptions.ExeDirectory(), "EUROCAPS.TTF"));
+            //}
         }
 
         public void Init(Action<string> msg)    // called from EDDApplicationContext .. continues on with the construction of the form
@@ -640,52 +640,6 @@ namespace EDDiscovery
             RefreshButton(true);
             actioncontroller.ActionRunOnRefresh();
 
-            // DESCOPE CAPI for now, MAY turn back on later
-            //if (!Capi.IsCommanderLoggedin(EDCommander.Current.Name))
-            //{
-            //    Capi.Logout();
-
-            //    bool isdisabled;
-            //    bool isconfirmed = EliteDangerousCore.CompanionAPI.CompanionCredentials.CredentialState(EDCommander.Current.Name , out isdisabled) == EliteDangerousCore.CompanionAPI.CompanionCredentials.State.CONFIRMED;
-
-            //    if (isconfirmed )
-            //    {
-            //        if ( isdisabled)
-            //        {
-            //            LogLine("Companion API is disabled in commander settings".Tx(this,"CAPINA"));
-            //        }
-            //        else
-            //        {
-            //            try
-            //            {
-            //                Capi.LoginAs(EDCommander.Current.Name);
-            //                LogLine("Logged into Companion API".Tx(this,"CAPION"));
-            //            }
-            //            catch (Exception ex)
-            //            {
-            //                LogLineHighlight(string.Format("Companion API failed: {0}".Tx(this,"CAPIF"), ex.Message));
-            //                if (!(ex is EliteDangerousCore.CompanionAPI.CompanionAppException))
-            //                    LogLineHighlight(ex.StackTrace);
-            //            }
-            //        }
-            //    }
-            //}
-
-            //if (Capi.LoggedIn)
-            //{
-            //    try
-            //    {
-            //        Capi.GetProfile();
-            //        OnNewCompanionAPIData?.Invoke(Capi, null);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        LogLineHighlight(string.Format("Companion API failed: {0}".Tx(this, "CAPIF"), ex.Message));
-            //        if (!(ex is EliteDangerousCore.CompanionAPI.CompanionAppException))
-            //            LogLineHighlight(ex.StackTrace);
-            //    }
-            //}
-
             if (EDCommander.Current.SyncToInara)
             {
                 EliteDangerousCore.Inara.InaraSync.Refresh(LogLine, history, EDCommander.Current);
@@ -704,58 +658,7 @@ namespace EDDiscovery
             // all notes committed
             SystemNoteClass.CommitDirtyNotes((snc) => { if (EDCommander.Current.SyncToEdsm && snc.FSDEntry) EDSMClass.SendComments(snc.SystemName, snc.Note, snc.EdsmId, he.Commander); });
 
-            // DESCOPE CAPI
-            //if ( he.EntryType == JournalTypeEnum.Docked )
-            //{
-            //    if (Capi.IsCommanderLoggedin(EDCommander.Current.Name))
-            //    {
-            //        // hang over from rares indenting.
-            //        {
-            //            System.Diagnostics.Trace.WriteLine("Commander " + EDCommander.Current.Name + " in CAPI");
-            //            try
-            //            {
-            //                Capi.GetProfile();
-            //                CMarket market = Capi.GetMarket();
-
-            //                JournalDocked dockevt = he.journalEntry as JournalDocked;
-
-            //                if (!Capi.Profile.Cmdr.docked)
-            //                {
-            //                    LogLineHighlight("CAPI not docked. Server API lagging!".Tx(this,"CAPIND"));
-            //                }
-            //                else if (!dockevt.StarSystem.Equals(Capi.Profile.CurrentStarSystem.name))
-            //                {
-            //                    LogLineHighlight(string.Format("CAPI profileSystemRequired is {0}, profile station is {1}".Tx(this, "CAPISS"), dockevt.StarSystem,Capi.Profile.CurrentStarSystem.name));
-            //                }
-            //                else if (!dockevt.StationName.Equals(Capi.Profile.StarPort.name))
-            //                {
-            //                    LogLineHighlight(string.Format("CAPI profileStationRequired is {0}, profile station is {1} ".Tx(this, "CAPISN"), dockevt.StationName, Capi.Profile.StarPort.name));
-            //                }
-            //                else if (!dockevt.StationName.Equals(market.name))
-            //                {
-            //                    LogLineHighlight(string.Format("CAPI stationname {0}, market station is {1} ".Tx(this,"CAPIMN"), dockevt.StationName , market.name));
-            //                }
-            //                else
-            //                {
-            //                    JournalEDDCommodityPrices entry = JournalEntry.AddEDDCommodityPrices(EDCommander.Current.Nr, he.journalEntry.EventTimeUTC.AddSeconds(1), Capi.Profile.StarPort.name, Capi.Profile.StarPort.faction, market.jcommodities);
-            //                    if (entry != null)
-            //                    {
-            //                        Controller.NewEntry(entry);
-            //                        OnNewCompanionAPIData?.Invoke(Capi, he);
-
-            //                        if (EDCommander.Current.SyncToEddn)
-            //                            SendPricestoEDDN(he, market);           // synchronous, but only done on docking, not worried.
-
-            //                    }
-            //                }
-            //            }
-            //            catch (Exception ex)
-            //            {
-            //                LogLineHighlight("Companion API get failed: ".Tx(this,"CAPIEX") + ex.Message);
-            //            }
-            //        }
-            //    }
-            //}
+            // HERE PERFORM CAPI.. DOCKED
 
             if (he.IsFSDJump)
             {
@@ -811,37 +714,6 @@ namespace EDDiscovery
                     LogLine("Profile reports errors in triggers:".Tx(this, "PE1") + errlist);
             }
         }
-
-        // DESCOPE CAPI - why are we not doing this with Market data?
-        //private void SendPricestoEDDN(HistoryEntry he, CMarket market)
-        //{
-        //    try
-        //    {
-        //        EliteDangerousCore.EDDN.EDDNClass eddn = new EliteDangerousCore.EDDN.EDDNClass();
-
-        //        eddn.commanderName = he.Commander.EdsmName;
-        //        //DESCOPE CAPI if (string.IsNullOrEmpty(eddn.commanderName))
-        //        //     eddn.commanderName = Capi.Credentials.Commander;
-
-        //        if (he.Commander.Name.StartsWith("[BETA]", StringComparison.InvariantCultureIgnoreCase) || he.IsBetaMessage)
-        //            eddn.isBeta = true;
-
-        //        JObject msg = eddn.CreateEDDNCommodityMessage(market.commodities, Capi.Profile.CurrentStarSystem.name, Capi.Profile.StarPort.name, market.id, DateTime.UtcNow);
-
-        //        if (msg != null)
-        //        {
-        //            LogLine(string.Format("Sent {0} event to EDDN ({1})".Tx(this,"EDDN"), he.EntryType.ToString(), he.EventSummary));
-        //            if (eddn.PostMessage(msg))
-        //            {
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogLineHighlight("EDDN: Send commodities prices failed: ".Tx(this,"EDDNEX") + ex.Message);
-        //    }
-
-        //}
 
         string syncprogressstring="",refreshprogressstring="";
 
@@ -968,7 +840,7 @@ namespace EDDiscovery
             if (cmdr != null)
             {
                 string cmdrfolder = cmdr.JournalDir;
-                if (cmdrfolder.Length < 1)
+                if (cmdrfolder == null || cmdrfolder.Length < 1)
                     cmdrfolder = EDJournalClass.GetDefaultJournalDir();
 
                 if (Directory.Exists(cmdrfolder))
@@ -1383,21 +1255,9 @@ namespace EDDiscovery
                 OnNewCalculatedRoute(list);
         }
 
-        public void NewTriLatStars(List<string> list, bool wanted)
-        {
-            if (OnNewStarsForTrilat != null)
-                OnNewStarsForTrilat(list, wanted);
-        }
+        #endregion
 
-        public void NewExpeditionStars(List<string> list)
-        {
-            if (OnNewStarsForExpedition != null)
-                OnNewStarsForExpedition(list);
-        }
-
-#endregion
-
-#region Add Ons
+        #region Add Ons
         public void manageAddOnsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             buttonExtManageAddOns_Click(sender,e);
@@ -1580,8 +1440,19 @@ namespace EDDiscovery
 
             if (!edsm.ValidCredentials)
             {
-                ExtendedControls.MessageBoxTheme.Show(this, "Please ensure a commander is selected and it has a EDSM API key set".Tx(this,"NoEDSMAPI"));
+                ExtendedControls.MessageBoxTheme.Show(this, "Please ensure a commander is selected and it has a EDSM API key set".Tx(this, "NoEDSMAPI"));
                 return;
+            }
+
+            if (!EDCommander.Current.SyncToEdsm)
+            {
+                string dlgtext = "You have disabled sync to EDSM for this commander.  Are you sure you want to send unsynced events to EDSM?".Tx(this, "ConfirmSyncToEDSM");
+                string dlgcapt = "Confirm EDSM sync".Tx(this, "ConfirmSyncToEDSMCaption");
+
+                if (ExtendedControls.MessageBoxTheme.Show(this, dlgtext, dlgcapt, MessageBoxButtons.YesNo) == DialogResult.No)
+                {
+                    return;
+                }
             }
 
             try

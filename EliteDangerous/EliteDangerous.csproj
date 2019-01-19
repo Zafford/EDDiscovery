@@ -64,26 +64,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CompanionAPI\CCommander.cs" />
-    <Compile Include="CompanionAPI\CMarket.cs" />
-    <Compile Include="CompanionAPI\CompanionAPIClass.cs" />
-    <Compile Include="CompanionAPI\CompanionCredentials.cs" />
-    <Compile Include="CompanionAPI\CompanionException.cs" />
-    <Compile Include="CompanionAPI\CProfile.cs" />
-    <Compile Include="CompanionAPI\CShip.cs" />
-    <Compile Include="CompanionAPI\CStarport.cs" />
-    <Compile Include="CompanionAPI\CSystem.cs" />
-    <Compile Include="CompanionAPI\RijndaelCrypt.cs" />
     <Compile Include="Config\EliteConfigInstance.cs" />
     <Compile Include="Config\IEliteConfig.cs" />
     <Compile Include="Config\IEliteOptions.cs" />
     <Compile Include="DB\BookmarkClass.cs" />
-    <Compile Include="DB\RegisterEntry.cs" />
-    <Compile Include="DB\SQLiteCommandED.cs" />
-    <Compile Include="DB\SQLiteConnectionED.cs" />
     <Compile Include="DB\SQLiteConnectionSystem.cs" />
     <Compile Include="DB\SQLiteConnectionUser.cs" />
-    <Compile Include="DB\SQLiteDBClass.cs" />
     <Compile Include="DB\SavedRouteClass.cs" />
     <Compile Include="DB\SystemClassDB.cs" />
     <Compile Include="DB\SystemNoteClass.cs" />
@@ -274,6 +260,10 @@
     <ProjectReference Include="..\BaseUtilities\BaseUtilities\BaseUtils.csproj">
       <Project>{c657c881-f3e1-45ba-aca5-966348010414}</Project>
       <Name>BaseUtils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BaseUtilities\SQLLite\SQLLite.csproj">
+      <Project>{3d79de63-5eec-4f30-a879-fb4c6ba4b4dc}</Project>
+      <Name>SQLLite</Name>
     </ProjectReference>
     <ProjectReference Include="..\EDDIcons\EDDIcons.csproj">
       <Project>{646f71be-f102-444e-9254-818e5a320ab8}</Project>

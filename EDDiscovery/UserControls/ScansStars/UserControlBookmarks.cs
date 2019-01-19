@@ -83,7 +83,7 @@ namespace EDDiscovery.UserControls
             dataGridViewBookMarks.Sort(sortcol, (sortorder == SortOrder.Descending) ? System.ComponentModel.ListSortDirection.Descending : System.ComponentModel.ListSortDirection.Ascending);
             dataGridViewBookMarks.Columns[sortcol.Index].HeaderCell.SortGlyphDirection = sortorder;
 
-            if (dataGridViewBookMarks.Rows.Count > 0 &&  lastrow != -1)
+            if (lastrow >= 0 && lastrow < dataGridViewBookMarks.Rows.Count)
                 dataGridViewBookMarks.CurrentCell = dataGridViewBookMarks.Rows[Math.Min(lastrow, dataGridViewBookMarks.Rows.Count - 1)].Cells[2];
 
             RefreshCurrentEdit();
@@ -281,7 +281,7 @@ namespace EDDiscovery.UserControls
             if (updating)
                 return;
 
-            SaveBackAnyChanges();
+            // removed this - this can overwrite commanded changes SaveBackAnyChanges();
             Display();
         }
 
@@ -345,5 +345,208 @@ namespace EDDiscovery.UserControls
 
         #endregion
 
+        private void buttonExtExcel_Click(object sender, EventArgs e)
+        {
+            if (dataGridViewBookMarks.Rows.Count == 0)
+            {
+                ExtendedControls.MessageBoxTheme.Show(FindForm(), "No data to export", "Export EDSM", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
+
+            Forms.ExportForm frm = new Forms.ExportForm();
+            frm.Init(new string[] { "Export Current View" }, disablestartendtime: true);
+
+            if (frm.ShowDialog(FindForm()) == DialogResult.OK)
+            {
+                if (frm.SelectedIndex == 0)
+                {
+                    string path = frm.Path;               //string path = "C:\\code\\f.csv"; // debug
+
+                    BaseUtils.CSVWriteGrid grd = new BaseUtils.CSVWriteGrid();
+                    grd.SetCSVDelimiter(frm.Comma);
+
+                    List<string> colh = new List<string>();
+                    colh.AddRange(new string[] { "Type", "Time", "System/Region", "Note","X","Y", "Z", "Planet", "Name", "Comment", "Lat","Long"});
+
+                    grd.GetHeader += delegate (int c)
+                    {
+                        return (c < colh.Count && frm.IncludeHeader) ? colh[c] : null;
+                    };
+
+                    int bkrowno = 0;
+                    IEnumerator<Tuple<PlanetMarks.Planet, PlanetMarks.Location>> planetloc = null;
+
+                    System.Diagnostics.Debug.WriteLine("Rows " + dataGridViewBookMarks.Rows.Count);
+
+                    grd.GetLineStatus += delegate (int r)
+                    {
+                        return bkrowno < dataGridViewBookMarks.Rows.Count ? BaseUtils.CSVWriteGrid.LineStatus.OK : BaseUtils.CSVWriteGrid.LineStatus.EOF;
+                    };
+
+                    grd.GetLine += delegate (int r)
+                    {
+                        DataGridViewRow rw = dataGridViewBookMarks.Rows[bkrowno];
+                        BookmarkClass bk = rw.Tag as BookmarkClass;
+                        bool firstplanetrow = false;
+
+                        if (planetloc == null && bk.hasPlanetaryMarks)          // if not iterating planets, but it has one, iterate
+                        {
+                            planetloc = bk.PlanetaryMarks.GetEnumerator();
+                            planetloc.MoveNext();       // move to first
+                            firstplanetrow = true;
+                        }
+
+                        List<Object> retrow = new List<Object>
+                        {
+                            bk.isRegion ? "Region" : "System",
+                            bk.Time.ToStringYearFirst(),
+                            bk.isRegion ? bk.Heading : bk.StarName,
+                            bk.Note,
+                            bk.x.ToString("0.##"),
+                            bk.y.ToString("0.##"),
+                            bk.z.ToString("0.##"),
+                        };
+
+                        System.Diagnostics.Debug.WriteLine("Export system " + bkrowno + " " + bk.StarName);
+
+                        if (planetloc != null)
+                        {
+                            var plloc = planetloc.Current;
+                            List<Object> planetrow = new List<Object>
+                            {
+                                plloc.Item1.Name,
+                                plloc.Item2.Name,
+                                plloc.Item2.Comment,
+                                plloc.Item2.IsWholePlanetBookmark ? "" : plloc.Item2.Latitude.ToString("0.##"),
+                                plloc.Item2.IsWholePlanetBookmark ? "" : plloc.Item2.Longitude.ToString("0.##"),
+                            };
+
+                            if (!firstplanetrow)
+                            {
+                                retrow = new List<object>() { "", "", "", "", "", "", "" };
+                            }
+
+                            retrow.AddRange(planetrow);
+                        }
+
+                        if (planetloc == null || planetloc.MoveNext() == false)
+                        {
+                            planetloc = null;
+                            bkrowno++;
+                        }
+
+                        return retrow.ToArray();
+                    };
+
+                    if (grd.WriteCSV(path))
+                    {
+                        if (frm.AutoOpen)
+                            System.Diagnostics.Process.Start(path);
+                    }
+                    else
+                        ExtendedControls.MessageBoxTheme.Show(FindForm(), "Failed to write to " + path, "Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+            }
+        }
+
+        private void buttonExtImport_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+
+            dlg.InitialDirectory = SQLiteConnectionUser.GetSettingString("BookmarkFormImportExcelFolder", "c:\\");
+
+            if (!System.IO.Directory.Exists(dlg.InitialDirectory))
+                System.IO.Directory.CreateDirectory(dlg.InitialDirectory);
+
+            dlg.DefaultExt = "csv";
+            dlg.AddExtension = true;
+            dlg.Filter = "CVS Files (*.csv)|*.csv|All files (*.*)|*.*";
+
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                string path = dlg.FileName;
+
+                BaseUtils.CSVFile csv = new BaseUtils.CSVFile();
+
+                if ( csv.Read(path, System.IO.FileShare.ReadWrite))
+                {
+                    List<BaseUtils.CSVFile.Row> rows = csv.RowsExcludingHeaderRow;
+
+                    BookmarkClass currentbk = null;
+
+                    var Regexyyyyddmm = new System.Text.RegularExpressions.Regex(@"\d\d\d\d-\d\d-\d\d", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Singleline);
+
+                    foreach ( var r in rows)
+                    {
+                        string type = r[0];
+                        string date = r[1];
+
+                        if (type.HasChars() && date.HasChars())
+                        {
+                            bool region = type?.Equals("Region", StringComparison.InvariantCultureIgnoreCase) ?? false;
+
+                            DateTime time = DateTime.MinValue;
+
+                            bool isyyyy = Regexyyyyddmm.IsMatch(date);      // excel, after getting our output in, converts the damn thing to local dates.. this distinguishes it.
+
+                            bool success = isyyyy ? DateTime.TryParse(date, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out time) :
+                                                                                    DateTime.TryParse(date, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.DateTimeStyles.AssumeLocal, out time);
+
+                            if (success)
+                            {
+                                string name = r[2];
+                                string note = r[3];
+                                double? x = r[4].InvariantParseDoubleNull();
+                                double? y = r[5].InvariantParseDoubleNull();
+                                double? z = r[6].InvariantParseDoubleNull();
+
+                                if (x != null && y != null && z != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine("Bookmark {0} {1} {2} {3} ({4},{5},{6}", type, time.ToStringZulu(), name, note, x, y, z);
+
+                                    currentbk = GlobalBookMarkList.Instance.FindBookmark(name, region);
+
+                                    if (currentbk != null)
+                                    {
+                                        GlobalBookMarkList.Instance.AddOrUpdateBookmark(currentbk, !region, name, x.Value, y.Value, z.Value, time, note, currentbk.PlanetaryMarks);
+                                    }
+                                    else
+                                        currentbk = GlobalBookMarkList.Instance.AddOrUpdateBookmark(null, !region, name, x.Value, y.Value, z.Value, time, note, null);
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.WriteLine("Not a system with valid coords {0} {1}", r[0], r[1]);
+                                }
+                            }
+                            else
+                                System.Diagnostics.Debug.WriteLine("Rejected due to date {0} {1}", r[0], r[1]);
+                        }
+
+                        string planet = r[7];
+
+                        if (planet.HasChars() && currentbk != null)
+                        {
+                            string locname = r[8];
+                            string comment = r[9];
+                            double? latitude = r[10].InvariantParseDoubleNull();
+                            double? longitude = r[11].InvariantParseDoubleNull();
+
+                            if (!locname.HasChars() && latitude == null && longitude == null) // whole planet bookmark
+                            {
+                                currentbk.AddOrUpdatePlanetBookmark(planet, comment);
+                            }
+                            else if (locname.HasChars() && latitude.HasValue && longitude.HasValue)
+                            {
+                                currentbk.AddOrUpdateLocation(planet, locname, comment, latitude.Value, longitude.Value);
+                            }
+                        }
+                    }
+
+                    SQLiteConnectionUser.PutSettingString("BookmarkFormImportExcelFolder", System.IO.Path.GetDirectoryName(path));
+                }
+                else
+                    ExtendedControls.MessageBoxTheme.Show(FindForm(), "Failed to read " + path, "Import Failed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
     }
 }

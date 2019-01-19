@@ -100,8 +100,9 @@ namespace EDDiscovery.UserControls
         public override Color ColorTransparency { get { return transparencycolor; } }
         public override void SetTransparency(bool on, Color curcol)
         {
-        // TBD    imagebox.BackColor = this.BackColor = panelStars.BackColor = panelStars.vsc.SliderColor = panelStars.vsc.BackColor = panelControls.BackColor = curcol;
-			rollUpPanelTop.BackColor = curcol;
+            panelStars.SetBackground(curcol);
+            this.BackColor = panelControls.BackColor = curcol;
+            rollUpPanelTop.BackColor = curcol;
 			rollUpPanelTop.ShowHiddenMarker = !on;
         }
 
@@ -171,9 +172,15 @@ namespace EDDiscovery.UserControls
             StarScan.SystemNode data = panelStars.DrawSystem(showing_system, showing_matcomds, discoveryform.history);
 
             if (showing_system == null)
+            {
                 SetControlText("No System");
-            else 
+            }
+            else
+            {
                 SetControlText(data == null ? "No Scan".Tx() : data.system.Name);
+                if (data != null)
+                    BuildSystemInfo(data);
+            }
 
         }
 
@@ -193,7 +200,7 @@ namespace EDDiscovery.UserControls
                 {
                     if (checkBoxEDSM.Checked || !body.ScanData.IsEDSMBody)
                     {
-                        value += body.ScanData.EstimatedValue;
+                        value += body.ScanData.EstimateScanValue(body.IsMapped, body.WasMappedEfficiently);
                     }
                 }
             }
@@ -439,11 +446,11 @@ namespace EDDiscovery.UserControls
                         else
                         {
                             List<JournalScan> scans = null;
-
+                            
                             if (frm.SelectedIndex < 3)
                             {
                                 var entries = JournalEntry.GetByEventType(JournalTypeEnum.Scan, EDCommander.CurrentCmdrID, frm.StartTime, frm.EndTime);
-                                scans = entries.ConvertAll<JournalScan>(x => (JournalScan)x);
+                                scans = entries.ConvertAll(x => (JournalScan)x);
                             }
                             else
                             {
@@ -476,6 +483,11 @@ namespace EDDiscovery.UserControls
 
                             bool ShowStars = frm.SelectedIndex < 2 || frm.SelectedIndex == 3;
                             bool ShowPlanets = frm.SelectedIndex == 0 || frm.SelectedIndex == 2 || frm.SelectedIndex == 4;
+
+                            List<JournalSAAScanComplete> mappings = ShowPlanets ? 
+                                JournalEntry.GetByEventType(JournalTypeEnum.SAAScanComplete, EDCommander.CurrentCmdrID, frm.StartTime, frm.EndTime)
+                                .ConvertAll(x => (JournalSAAScanComplete)x)
+                                : null;
 
                             if (frm.IncludeHeader)
                             {
@@ -579,7 +591,18 @@ namespace EDDiscovery.UserControls
 
                                 writer.Write(csv.Format(scan.EventTimeUTC));
                                 writer.Write(csv.Format(scan.BodyName));
-                                writer.Write(csv.Format(scan.EstimatedValue));
+                                if (string.IsNullOrEmpty(scan.PlanetClass))
+                                {
+                                    writer.Write(csv.Format(scan.EstimateScanValue(false, false)));
+                                }
+                                else
+                                {
+                                    var map = mappings.FirstOrDefault(m => m.BodyName == scan.BodyName);
+                                    if (map == null)
+                                        writer.Write(csv.Format(scan.EstimateScanValue(false, false)));
+                                    else
+                                        writer.Write(csv.Format(scan.EstimateScanValue(true, map.ProbesUsed <= map.EfficiencyTarget)));
+                                }
                                 writer.Write(csv.Format(scan.DistanceFromArrivalLS));
 
                                 if (ShowStars)

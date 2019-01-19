@@ -164,13 +164,16 @@ namespace EDDiscovery.UserControls
             BaseUtils.Translator.Instance.Translate(this);
             BaseUtils.Translator.Instance.Translate(contextMenuStrip, this);
             BaseUtils.Translator.Instance.Translate(toolTip, this);
+
+            labelTarget.Size = new Size(1280, 24);
+            labelTarget.Text = "No Target".Tx(this, "NT");
         }
 
         public override void LoadLayout()
         {
             DGVLoadColumnLayout(dataGridViewCombat, DbColumnSave);
+            //DEBUG target with           uctg.OnTravelSelectionChanged += (he,hl,s) => SetTarget(he);
         }
-
 
         public UserControlCombatPanel()
         {
@@ -217,10 +220,10 @@ namespace EDDiscovery.UserControls
 
             Color fore = on ? discoveryform.theme.SPanelColor : discoveryform.theme.LabelColor;
 
-            labelCredits.Font = labelTotalKills.Font = labelTotalReward.Font = labelFactionKills.Font = labelFactionReward.Font = labelFaction.Font = labelTotalCrimes.Font = labelBalance.Font = on ? transparentfont : EDDTheme.Instance.GetFont;
+            labelTarget.Font = labelCredits.Font = labelTotalKills.Font = labelTotalReward.Font = labelFactionKills.Font = labelFactionReward.Font = labelFaction.Font = labelTotalCrimes.Font = labelBalance.Font = on ? transparentfont : EDDTheme.Instance.GetFont;
             
-            labelCredits.ForeColor = labelTotalKills.ForeColor = labelTotalReward.ForeColor = labelFactionKills.ForeColor = labelFactionReward.ForeColor = labelFaction.ForeColor = labelTotalCrimes.ForeColor = labelBalance.ForeColor = fore;
-            labelCredits.TextBackColor = labelTotalKills.TextBackColor = labelTotalReward.TextBackColor = labelFactionKills.TextBackColor = labelFactionReward.TextBackColor = labelFaction.TextBackColor = labelTotalCrimes.TextBackColor = labelBalance.TextBackColor = curbackcol;
+            labelTarget.ForeColor = labelCredits.ForeColor = labelTotalKills.ForeColor = labelTotalReward.ForeColor = labelFactionKills.ForeColor = labelFactionReward.ForeColor = labelFaction.ForeColor = labelTotalCrimes.ForeColor = labelBalance.ForeColor = fore;
+            labelTarget.TextBackColor = labelCredits.TextBackColor = labelTotalKills.TextBackColor = labelTotalReward.TextBackColor = labelFactionKills.TextBackColor = labelFactionReward.TextBackColor = labelFaction.TextBackColor = labelTotalCrimes.TextBackColor = labelBalance.TextBackColor = curbackcol;
 
         }
         public override Color ColorTransparency { get { return Color.Green; } }
@@ -314,10 +317,18 @@ namespace EDDiscovery.UserControls
                         SetLabels();
                     }
                 }
+
+                if (he.EntryType == JournalTypeEnum.Undocked && current.Type == FilterEntry.EntryType.Lastdock )        // on undock, and we are in last docked mode, refresh
+                {
+                    Display();
+                }
             }
 
             if (he.EntryType == JournalTypeEnum.MissionAccepted)        // mission accepted means another entry..
                 FillCampaignCombo();                                    // could only add entries, so no need to check it its disappeared
+
+
+            SetTarget(he);
         }
 
         bool AddToGrid(HistoryEntry he , bool ins = false )
@@ -348,7 +359,7 @@ namespace EDDiscovery.UserControls
             JournalTypeEnum.Died,
             JournalTypeEnum.FighterDestroyed,JournalTypeEnum.FighterRebuilt,JournalTypeEnum.PVPKill,
             JournalTypeEnum.Interdicted,JournalTypeEnum.EscapeInterdiction,
-            JournalTypeEnum.HeatDamage,JournalTypeEnum.HeatWarning, JournalTypeEnum.HullDamage,
+            JournalTypeEnum.HeatDamage,JournalTypeEnum.HullDamage,
             JournalTypeEnum.SRVDestroyed
         };
 
@@ -436,14 +447,40 @@ namespace EDDiscovery.UserControls
         void SetLabels()
         {
             bool faction = current != null ? current.TargetFaction.Length > 0 : false;
-            labelCredits.Text = (discoveryform.history.GetLast?.Credits.ToString("N0") ?? "") + "cr";
-            labelTotalKills.Text = "Kills:".Tx(this) + total_kills.ToStringInvariant();
-            labelTotalReward.Text = total_reward.ToString("N0") + "cr";
+            labelTotalKills.Text = (total_kills>0) ? ("Kills:".Tx(this) + total_kills.ToStringInvariant()) : "";
             labelFactionKills.Text = faction ? ("Faction:".Tx(this) + faction_kills.ToStringInvariant()) : "";
-            labelFactionReward.Text = faction ? (faction_reward.ToString("N0") + "cr") : "";
             labelFaction.Text = faction ? (current.TargetFaction) : "";
             labelTotalCrimes.Text = (total_crimes>0) ? ("Crimes:".Tx(this) + total_crimes.ToStringInvariant()) : "";
-            labelBalance.Text = "Bal:".Tx(this) + balance.ToString("N0") + "cr";
+
+            labelCredits.Text = (discoveryform.history.GetLast != null) ? (discoveryform.history.GetLast.Credits.ToString("N0") + "cr") : "";
+            labelBalance.Text = (balance > 0 ) ? ("Bal:".Tx(this) + balance.ToString("N0") + "cr") : "";
+            labelFactionReward.Text = (faction && faction_reward != balance) ? (faction_reward.ToString("N0") + "cr") : "";
+            labelTotalReward.Text = (total_reward != balance) ? (total_reward.ToString("N0") + "cr") : "";
+
+        }
+
+        static JournalTypeEnum[] targetofflist = new JournalTypeEnum[]            // ones to display without any extra detail
+        {
+            JournalTypeEnum.Died,
+            JournalTypeEnum.FighterDestroyed,
+            JournalTypeEnum.SupercruiseEntry,
+            JournalTypeEnum.FSDJump,
+            JournalTypeEnum.Docked,
+            JournalTypeEnum.LaunchSRV,
+            JournalTypeEnum.LaunchFighter,
+        };
+
+        private void SetTarget(HistoryEntry he)
+        {
+            if (he.journalEntry.EventTypeID == JournalTypeEnum.ShipTargeted)
+            {
+                EliteDangerousCore.JournalEvents.JournalShipTargeted je = he.journalEntry as EliteDangerousCore.JournalEvents.JournalShipTargeted;
+                labelTarget.Text = je.ToString();
+            }
+            else if (Array.IndexOf(targetofflist, he.journalEntry.EventTypeID) >= 0)
+            {
+                labelTarget.Text = "No Target".Tx(this, "NT");
+            }
         }
 
         #region UI

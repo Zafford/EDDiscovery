@@ -180,6 +180,14 @@ namespace EDDiscovery.UserControls
         #region PopulateGrid
 
         /// <summary>
+        /// Constructor to pass properties to postdrawing function
+        /// </summary>
+        private class Overlays
+        {
+            public bool landable, materials, volcanism, mapped;     // all false on creation
+        }
+                
+        /// <summary>
         /// Draw the system bodies
         /// </summary>
         /// <param name="he">HistoryEntry</param>
@@ -194,7 +202,7 @@ namespace EDDiscovery.UserControls
 
             if (he == null)     //  no he, no display
             {
-                last_he = null;
+                last_he = he;
                 dataGridViewScangrid.Rows.Clear();
                 SetControlText("No Scan".Tx());
                 return;
@@ -270,8 +278,10 @@ namespace EDDiscovery.UserControls
 
                             var cur = dataGridViewScangrid.Rows[dataGridViewScangrid.Rows.Count - 1];
 
-                            cur.Tag = img;
+                            sn.ScanData.EstimateScanValue(sn.IsMapped, sn.WasMappedEfficiently);        // ensure its up to date
 
+                            cur.Tag = img;
+                            cur.Cells[0].Tag = null;
                             cur.Cells[4].Tag = cur.Cells[0].ToolTipText = cur.Cells[1].ToolTipText = cur.Cells[2].ToolTipText = cur.Cells[3].ToolTipText = cur.Cells[4].ToolTipText =
                                         sn.ScanData.DisplayString(historicmatlist: last_he.MaterialCommodity, currentmatlist: discoveryform.history.GetLast?.MaterialCommodity);
                         }
@@ -279,7 +289,9 @@ namespace EDDiscovery.UserControls
                 }
                 else
                 {
+                    var overlays = new Overlays();
                     // check for null data
+
                     if (sn.ScanData?.BodyName != null)
                     {
                         // check for body class
@@ -412,12 +424,22 @@ namespace EDDiscovery.UserControls
                                 }
 
                                 bdDetails.Append(Environment.NewLine).Append("Landable".Tx(this)).Append(Gg).Append(". ");
+                                overlays.landable = true;
                             }
 
                             // tell us that there is some volcanic activity
                             if (sn.ScanData.Volcanism != null)
-                                bdDetails.Append(Environment.NewLine).Append("Volcanic activity".Tx(this)).Append(". ");
+                            {
+                                bdDetails.Append(Environment.NewLine).Append("Geological activity".Tx(this)).Append(": ").Append(sn.ScanData.Volcanism).Append(". ");
+                                overlays.volcanism = true;
+                            }
 
+                            if (sn.IsMapped)
+                            {
+                                bdDetails.Append(Environment.NewLine).Append("Surface mapped".Tx(this)).Append(". ");
+                                overlays.mapped = true;
+                            }
+                            
                             // materials                        
                             if (sn.ScanData.HasMaterials)
                             {
@@ -428,12 +450,17 @@ namespace EDDiscovery.UserControls
                                 {
                                     var mc = MaterialCommodityData.GetByFDName(mat.Key);
                                     if (mc?.IsJumponium == true)
+                                    {
                                         ret = ret.AppendPrePad(mc.Name, ", ");
+                                        overlays.materials = true;
+                                    }
                                 }
 
                                 if (ret.Length > 0 && showMaterials)
+                                {
                                     bdDetails.Append(Environment.NewLine).Append("This body contains: ".Tx(this, "BC")).Append(ret);
-
+                                }
+                                                                
                                 ReportJumponium(ret);
                             }
                         }
@@ -474,7 +501,7 @@ namespace EDDiscovery.UserControls
                         //! for all relevant bodies:
 
                         // give estimated value
-                        var value = sn.ScanData.EstimatedValue;
+                        var value = sn.ScanData.EstimateScanValue(sn.IsMapped, sn.WasMappedEfficiently);
                         if (showValues)
                         {
                             bdDetails.Append(Environment.NewLine).Append("Value".Tx(this)).Append(" ").Append(value.ToString("N0"));
@@ -489,6 +516,7 @@ namespace EDDiscovery.UserControls
 
                         cur.Tag = img;
 
+                        cur.Cells[0].Tag = overlays;
                         cur.Cells[4].Tag = cur.Cells[0].ToolTipText = cur.Cells[1].ToolTipText = cur.Cells[2].ToolTipText = cur.Cells[3].ToolTipText = cur.Cells[4].ToolTipText =
                                     sn.ScanData.DisplayString(historicmatlist: last_he.MaterialCommodity, currentmatlist: discoveryform.history.GetLast?.MaterialCommodity);
                     }
@@ -577,9 +605,9 @@ namespace EDDiscovery.UserControls
 
             foreach (var body in system.Bodies)
             {
-                if (body?.ScanData?.EstimatedValue != null)
-                {
-                    value += body.ScanData.EstimatedValue;
+                if (body.ScanData != null)
+                { 
+                    value += body.ScanData.EstimateScanValue(body.IsMapped, body.WasMappedEfficiently);
                 }
             }
 
@@ -591,13 +619,62 @@ namespace EDDiscovery.UserControls
         private void dataGridViewScangrid_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
         {
             var cur = dataGridViewScangrid.Rows[e.RowIndex];
+            Overlays overlays = cur.Cells[0].Tag as Overlays;       // may be null
+
             if (cur.Tag != null)
             {
                 // we programatically draw the image because we have control over its pos/ size this way, which you can't do
                 // with a image column - there you can only draw a fixed image or stretch it to cell contents.. which we don't want to do
-                var sz = dataGridViewScangrid.RowTemplate.MinimumHeight - 2;
-                var vpos = e.RowBounds.Top + e.RowBounds.Height / 2 - sz / 2;
-                e.Graphics.DrawImage((Image)cur.Tag, new Rectangle(e.RowBounds.Left + 1, vpos, sz, sz));
+
+                int top = e.RowBounds.Top + 4;
+                int bot = e.RowBounds.Bottom - 4;
+                int left = e.RowBounds.Left + 4;
+                int right = e.RowBounds.Left + cur.Cells[0].Size.Width - 4;
+
+                int icons = 0;
+
+                if (overlays != null)
+                    icons = (overlays.mapped ? 1 : 0) + (overlays.volcanism ? 1 : 0) + (overlays.materials ? 1 : 0) + (overlays.landable ? 1 : 0);
+
+                int iconsize = 12;
+
+                if (icons != 0)
+                {
+                    iconsize = Math.Min(iconsize, (bot - top) / icons - 2);             // size so they all fit, less 2 for interspacing
+                    //System.Diagnostics.Debug.WriteLine("Icon size" + iconsize);
+                    right -= iconsize;
+                }
+
+                int size = Math.Min(bot - top, right - left);                           
+
+                Image img = cur.Tag as Image;
+                e.Graphics.DrawImage(img, new Rectangle((right+left)/2-size/2, (bot+top)/2-size/2, size, size));        // main icon
+
+                int vposoverlay = (top+bot)/2 - iconsize*icons/2;                       // position it centrally vertically
+
+                if (overlays?.landable ?? false)
+                {
+                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_Bodies_Landable, new Rectangle(right, vposoverlay, iconsize, iconsize));
+                    vposoverlay += iconsize + 2;
+                }
+
+                if (overlays?.materials ?? false)
+                {
+                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_ShowAllMaterials, new Rectangle(right, vposoverlay , iconsize, iconsize));
+                    vposoverlay += iconsize + 2;
+                }
+
+                if (overlays?.volcanism ?? false)
+                {
+                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_Bodies_Volcanism, new Rectangle(right, vposoverlay, iconsize, iconsize));
+                    vposoverlay += iconsize + 2;
+                }
+
+                if (overlays?.mapped ?? false)
+                {
+                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_Bodies_Mapped, new Rectangle(right, vposoverlay, iconsize, iconsize));
+
+                }
             }
         }
 

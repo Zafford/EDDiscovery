@@ -256,10 +256,11 @@
     <Compile Include="ScreenShots\ScreenShotConverter.cs" />
     <Compile Include="ScreenShots\ScreenShotDirectoryWatcher.cs" />
     <Compile Include="ScreenShots\ScreenShotImageConverter.cs" />
-    <Compile Include="UserControls\Combat\UserControlCombatPanel.cs">
+    <Compile Include="UserControls\Helpers\RecipeFilterSelector.cs" />
+    <Compile Include="UserControls\Overlays\UserControlCombatPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="UserControls\Combat\UserControlCombatPanel.Designer.cs">
+    <Compile Include="UserControls\Overlays\UserControlCombatPanel.Designer.cs">
       <DependentUpon>UserControlCombatPanel.cs</DependentUpon>
     </Compile>
     <Compile Include="UserControls\CurrentState\UserControlLedger.cs">
@@ -478,6 +479,12 @@
     <Compile Include="UserControls\Overlays\UserControlNotePanel.Designer.cs">
       <DependentUpon>UserControlNotePanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserControls\Overlays\UserControlMissionOverlay.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\Overlays\UserControlMissionOverlay.Designer.cs">
+      <DependentUpon>UserControlMissionOverlay.cs</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\Overlays\UserControlRouteTracker.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -534,6 +541,12 @@
     </Compile>
     <Compile Include="UserControls\Search\UserControlSearchMaterialsCommodities.Designer.cs">
       <DependentUpon>UserControlSearchMaterialsCommodities.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\Search\UserControlSearchScans.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\Search\UserControlSearchScans.Designer.cs">
+      <DependentUpon>UserControlSearchScans.cs</DependentUpon>
     </Compile>
     <Compile Include="UserControls\Search\UserControlSearchStars.cs">
       <SubType>UserControl</SubType>
@@ -670,7 +683,7 @@
     <EmbeddedResource Include="ScreenShots\ScreenShotConfigureForm.resx">
       <DependentUpon>ScreenShotConfigureForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="UserControls\Combat\UserControlCombatPanel.resx">
+    <EmbeddedResource Include="UserControls\Overlays\UserControlCombatPanel.resx">
       <DependentUpon>UserControlCombatPanel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UserControls\CurrentState\UserControlLedger.resx">
@@ -724,6 +737,9 @@
     <EmbeddedResource Include="UserControls\Overlays\UserControlNotePanel.resx">
       <DependentUpon>UserControlNotePanel.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\Overlays\UserControlMissionOverlay.resx">
+      <DependentUpon>UserControlMissionOverlay.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UserControls\Overlays\UserControlRouteTracker.resx">
       <DependentUpon>UserControlRouteTracker.cs</DependentUpon>
     </EmbeddedResource>
@@ -750,6 +766,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UserControls\Search\UserControlSearchMaterialsCommodities.resx">
       <DependentUpon>UserControlSearchMaterialsCommodities.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\Search\UserControlSearchScans.resx">
+      <DependentUpon>UserControlSearchScans.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UserControls\Search\UserControlSearchStars.resx">
       <DependentUpon>UserControlSearchStars.cs</DependentUpon>
@@ -936,6 +955,10 @@
     <ProjectReference Include="..\BaseUtilities\OpenTKUtils\OpenTKUtils.csproj">
       <Project>{4cfa37d5-4182-4cae-afc3-7563a13b44ee}</Project>
       <Name>OpenTKUtils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BaseUtilities\SQLLite\SQLLite.csproj">
+      <Project>{3d79de63-5eec-4f30-a879-fb4c6ba4b2dc}</Project>
+      <Name>SQLLite</Name>
     </ProjectReference>
     <ProjectReference Include="..\EDDIcons\EDDIcons.csproj">
       <Project>{646f71be-f102-444e-9254-818e5a320ab8}</Project>

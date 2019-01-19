@@ -31,15 +31,18 @@ namespace EliteDangerousCore.DB
             public string Comment;
             public double Latitude;
             public double Longitude;
+
+            [Newtonsoft.Json.JsonIgnore]
+            public bool IsWholePlanetBookmark { get { return Name== "" && Latitude == 0 && Longitude == 0; } }
         }
 
         public class Planet
         {
             public string Name;
-            public List<Location> Locations;
+            public List<Location> Locations;            // may be null from reader..
         }
 
-        public List<Planet> Planets;            // may be null
+        public List<Planet> Planets;                    // may be null if no planets
 
         public bool hasMarks { get { return Planets != null && Planets.Count > 0 && Planets.Where(pl => pl.Locations.Count > 0).Any(); } }
 
@@ -77,6 +80,17 @@ namespace EliteDangerousCore.DB
                 return null;
         }
 
+        public IEnumerator<Tuple<Planet,Location>> GetEnumerator()
+        {
+            foreach (Planet pl in Planets)
+            {
+                foreach (Location loc in pl.Locations)
+                {
+                    yield return new Tuple<Planet,Location>(pl,loc);
+                }
+            }
+        }
+
         public Planet GetPlanet(string planet)  // null if planet does not exist.. else array
         {
             return Planets?.Find(x => x.Name.Equals(planet, StringComparison.InvariantCultureIgnoreCase));
@@ -96,9 +110,12 @@ namespace EliteDangerousCore.DB
                 if (Planets == null)
                     Planets = new List<Planet>();       // new planet list
 
-                p = new Planet() { Name = planet, Locations = new List<Location>() };
+                p = new Planet() { Name = planet };
                 Planets.Add(p);
             }
+
+            if (p.Locations == null)                    // done here, just in case we read a planet not locations in json.
+                p.Locations = new List<Location>();
 
             Location l = GetLocation(p, placename);     // location on planet by name
 
@@ -120,10 +137,15 @@ namespace EliteDangerousCore.DB
             AddOrUpdateLocation(planet, loc.Name, loc.Comment, loc.Latitude, loc.Longitude);
         }
 
+        public void AddOrUpdatePlanetBookmark(string planet, string comment)
+        {
+            AddOrUpdateLocation(planet, "", comment, 0,0 );
+        }
+
         public bool DeleteLocation(string planet, string placename)
         {
             Planet p = GetPlanet(planet);            // p = null if planet does not exist, else list of existing places
-            Location l = GetLocation(p, placename); // if p != null, find placenameYour okay, its 
+            Location l = GetLocation(p, placename); // if p != null, find placename 
             if (l != null)
             {
                 p.Locations.Remove(l);
@@ -217,11 +239,11 @@ namespace EliteDangerousCore.DB
                 cmd.AddParameterWithValue("@note", Note);
                 cmd.AddParameterWithValue("@pmarks", PlanetaryMarks?.ToJsonString());
 
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
 
                 using (DbCommand cmd2 = cn.CreateCommand("Select Max(id) as id from Bookmarks"))
                 {
-                    id = (long)SQLiteDBClass.SQLScalar(cn, cmd2);
+                    id = (long)cn.SQLScalar( cmd2);
                 }
 
                 return true;
@@ -250,7 +272,7 @@ namespace EliteDangerousCore.DB
                 cmd.AddParameterWithValue("@note", Note);
                 cmd.AddParameterWithValue("@pmarks", PlanetaryMarks?.ToJsonString());
 
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
 
                 return true;
             }
@@ -269,11 +291,11 @@ namespace EliteDangerousCore.DB
             using (DbCommand cmd = cn.CreateCommand("DELETE FROM Bookmarks WHERE id = @id"))
             {
                 cmd.AddParameterWithValue("@id", id);
-                SQLiteDBClass.SQLNonQueryText(cn, cmd);
+                cn.SQLNonQueryText( cmd);
                 return true;
             }
         }
-        
+
         // with a found bookmark.. add locations in the system
         public void AddOrUpdateLocation(string planet, string placename, string comment, double latp, double longp)
         {
@@ -282,8 +304,16 @@ namespace EliteDangerousCore.DB
             PlanetaryMarks.AddOrUpdateLocation(planet, placename, comment, latp, longp);
             Update();
         }
-        
-		// Update notes
+
+        public void AddOrUpdatePlanetBookmark(string planet, string comment)
+        {
+            if (PlanetaryMarks == null)
+                PlanetaryMarks = new PlanetMarks();
+            PlanetaryMarks.AddOrUpdatePlanetBookmark(planet, comment);
+            Update();
+        }
+
+        // Update notes
         public void UpdateNotes(string notes)
         {
             Note = notes;
@@ -340,13 +370,13 @@ namespace EliteDangerousCore.DB
 
             try
             {
-                using (SQLiteConnectionUser cn = new SQLiteConnectionUser(mode: EDDbAccessMode.Reader))
+                using (SQLiteConnectionUser cn = new SQLiteConnectionUser(mode: SQLLiteExtensions.SQLExtConnection.AccessMode.Reader))
                 {
                     using (DbCommand cmd = cn.CreateCommand("select * from Bookmarks"))
                     {
                         DataSet ds = null;
 
-                        ds = SQLiteDBClass.SQLQueryText(cn, cmd);
+                        ds = cn.SQLQueryText( cmd);
 
                         if (ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
                         {
@@ -372,7 +402,8 @@ namespace EliteDangerousCore.DB
         // return any mark
         public BookmarkClass FindBookmarkOnRegion(string name)   
         {
-            return globalbookmarks.Find(x => x.Heading != null && x.Name.Equals(x.Heading, StringComparison.InvariantCultureIgnoreCase));
+            BookmarkClass bc = globalbookmarks.Find(x => x.Heading != null && x.Heading.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return bc;
         }
 
         public BookmarkClass FindBookmarkOnSystem(string name)
@@ -399,7 +430,7 @@ namespace EliteDangerousCore.DB
             System.Diagnostics.Debug.Assert(System.Windows.Forms.Application.MessageLoop);
             bool addit = bk == null;
 
-            if (bk == null)
+            if (addit)
             {
                 bk = new BookmarkClass();
                 bk.Note = "";       // set empty, in case notes==null
@@ -440,8 +471,12 @@ namespace EliteDangerousCore.DB
             long id = bk.id;
             bk.Delete();
             globalbookmarks.RemoveAll(x => x.id == id);
-            OnBookmarkChange?.Invoke(bk,true);
+            OnBookmarkChange?.Invoke(bk, true);
         }
 
+        public void TriggerChange(BookmarkClass bk)
+        {
+            OnBookmarkChange?.Invoke(bk, true);
+        }
     }
 }

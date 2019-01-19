@@ -47,13 +47,14 @@ namespace EDDiscovery.UserControls
 
         public override void Init()
         {
+            dataGridView.CheckEDSM = true;
             dataGridView.MakeDoubleBuffered();
             dataGridView.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dataGridView.RowTemplate.Height = 26;
             dataGridView.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;     // NEW! appears to work https://msdn.microsoft.com/en-us/library/74b2wakt(v=vs.110).aspx
 
             findSystemsUserControl.Init(displaynumber, "SearchFindSys", true, discoveryform);
-            findSystemsUserControl.Excel += dataGridView.Excel;
+            findSystemsUserControl.Excel += () => { dataGridView.Excel(3); };
             findSystemsUserControl.ReturnSystems += StarsFound;
 
             BaseUtils.Translator.Instance.Translate(this, new Control[] { findSystemsUserControl });
@@ -84,6 +85,9 @@ namespace EDDiscovery.UserControls
 
             if (systems != null)
             {
+                DataGridViewColumn sortcol = dataGridView.SortedColumn != null ? dataGridView.SortedColumn : dataGridView.Columns[1];
+                SortOrder sortorder = dataGridView.SortedColumn != null ? dataGridView.SortOrder : SortOrder.Ascending;
+
                 ISystem cursystem = discoveryform.history.CurrentSystem;        // could be null
                 bool centresort = false;
 
@@ -102,12 +106,13 @@ namespace EDDiscovery.UserControls
                     centresort |= ret.Item2 >= 0;
                 }
 
-                dataGridView.Sort(centresort ? ColumnCentreDistance : ColumnCurrentDistance, ListSortDirection.Ascending);
+                dataGridView.Sort(sortcol, (sortorder == SortOrder.Descending) ? ListSortDirection.Descending : ListSortDirection.Ascending);
+                dataGridView.Columns[sortcol.Index].HeaderCell.SortGlyphDirection = sortorder;
             }
 
         }
 
-        private void dataGridViewEDSM_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
+        private void dataGridView_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
         {
             if (e.Column.Index == 1 || e.Column.Index == 2)
                 e.SortDataGridViewColumnNumeric();

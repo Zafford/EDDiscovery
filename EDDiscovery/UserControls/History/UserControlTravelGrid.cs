@@ -31,7 +31,7 @@ using EDDiscovery.Forms;
 
 namespace EDDiscovery.UserControls
 {
-    public partial class UserControlTravelGrid : UserControlCommonBase, IHistoryCursor
+    public partial class UserControlTravelGrid : UserControlCommonBase, IHistoryCursorNewStarList
     {
         #region Public IF
 
@@ -47,6 +47,8 @@ namespace EDDiscovery.UserControls
 
         // implement IHistoryCursor fields
         public event ChangedSelectionHEHandler OnTravelSelectionChanged;   // as above, different format, for certain older controls
+
+        public event OnNewStarsSubPanelsHandler OnNewStarList;
 
         // for primary travel grid for auto note jump
         public delegate void KeyDownInCell(int asciikeycode, int rowno, int colno, bool note);
@@ -103,7 +105,7 @@ namespace EDDiscovery.UserControls
         {
             //System.Diagnostics.Debug.WriteLine("Travel grid is " + this.GetHashCode());
 
-            cfs.ConfigureThirdOption("Travel".Tx(), "Docked;FSD Jump;Undocked;");
+            cfs.AddStandardExtraOptions();
             cfs.Changed += EventFilterChanged;
             TravelHistoryFilter.InitaliseComboBox(comboBoxHistoryWindow, DbHistorySave);
 
@@ -919,25 +921,30 @@ namespace EDDiscovery.UserControls
 
         private void trilaterationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AddSystemToOthers(true, false, false);
+            AddSystemToOthers(dist:true);
         }
 
         private void wantedSystemsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AddSystemToOthers(false, true, false);
+            AddSystemToOthers(wanted:true);
         }
 
         private void bothToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AddSystemToOthers(true, true, false);
+            AddSystemToOthers(dist:true, wanted:true);
         }
 
         private void routeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AddSystemToOthers(false, false, true);
+            AddSystemToOthers(expedition:true);
         }
 
-        private void AddSystemToOthers(bool dist, bool wanted, bool route)
+        private void explorationPanelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AddSystemToOthers(exploration:true);
+        }
+
+        private void AddSystemToOthers(bool dist = false, bool wanted = false, bool expedition = false, bool exploration = false)
         {
             IEnumerable<DataGridViewRow> selectedRows = dataGridViewTravel.SelectedCells.Cast<DataGridViewCell>()
                                                                         .Select(cell => cell.OwningRow)
@@ -961,21 +968,23 @@ namespace EDDiscovery.UserControls
             }
 
             if (dist)
-            {
-                discoveryform.NewTriLatStars(systemnamelist, false);
-            }
+                FireNewStarList(systemnamelist, OnNewStarsPushType.TriSystems);
 
             if (wanted)
-            {
-                discoveryform.NewTriLatStars(systemnamelist, true);
-            }
+                FireNewStarList(systemnamelist, OnNewStarsPushType.TriWanted);
 
-            if (route)
-            {
-                discoveryform.NewExpeditionStars(systemnamelist);
-            }
+            if (expedition)
+                FireNewStarList(systemnamelist, OnNewStarsPushType.Expedition);
+
+            if (exploration)
+                FireNewStarList(systemnamelist, OnNewStarsPushType.Exploration);
 
             this.Cursor = Cursors.Default;
+        }
+
+        public void FireNewStarList(List<string> system, OnNewStarsPushType pushtype)
+        {
+            OnNewStarList?.Invoke(system, pushtype);
         }
 
         private void viewOnEDSMToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1308,7 +1317,7 @@ namespace EDDiscovery.UserControls
 
                         if (s.Length > 0 && !s.Equals(laststring))
                         {
-                            System.Diagnostics.Debug.WriteLine("Call ts(j='" + json.Replace("'", "\\'") + "',s='" + s.Replace("'", "\\'") + "',r=" + (rw.Index + 1).ToStringInvariant() + ")");
+                            System.Diagnostics.Debug.WriteLine("Call ts(j='" + json?.Replace("'", "\\'") + "',s='" + s.Replace("'", "\\'") + "',r=" + (rw.Index + 1).ToStringInvariant() + ")");
                             laststring = s;
                         }
                     }
@@ -1390,7 +1399,7 @@ namespace EDDiscovery.UserControls
                         he.journalEntry.FillInformation(out string EventDescription, out string EventDetailedInfo);
                         return new Object[] {
                             dataGridViewTravel.Rows[r].Cells[0].Value,
-                            he.journalEntry.EventSummaryName,
+                            he.EventSummary,
                             (he.System != null) ? he.System.Name : "Unknown",    // paranoia
                             he.WhereAmI,
                             he.ShipInformation != null ? he.ShipInformation.Name : "Unknown",
@@ -1449,7 +1458,6 @@ namespace EDDiscovery.UserControls
 
         }
 
-#endregion
-
+        #endregion
     }
 }

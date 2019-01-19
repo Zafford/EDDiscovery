@@ -134,7 +134,6 @@ namespace EliteDangerousCore.EDDN
                     ["Government"] = true,
                     ["FactionState"] = true,
                     ["Happiness"] = true,
-                    ["HomeSystem"] = true,
                     ["Influence"] = true,
                     ["ActiveStates"] = new JArray
                     {
@@ -393,7 +392,8 @@ namespace EliteDangerousCore.EDDN
                 foreach (JObject faction in factions)
                 {
                     faction.Remove("MyReputation");
-                    faction.Remove("PlayerFaction");
+                    faction.Remove("SquadronFaction");
+                    faction.Remove("HomeSystem");
                     faction.Remove("HappiestSystem");
                     RemoveCommonKeys(faction);
                 }
@@ -421,7 +421,7 @@ namespace EliteDangerousCore.EDDN
 
         public JObject CreateEDDNMessage(JournalFSDJump journal)
         {
-            if (!journal.HasCoordinate || journal.StarPosFromEDSM)
+            if (!journal.HasCoordinate || journal.StarPosFromEDSM || journal.SystemAddress == null)
                 return null;
 
             JObject msg = new JObject();
@@ -431,7 +431,12 @@ namespace EliteDangerousCore.EDDN
 
             JObject message = journal.GetJson();
 
-            if (message["FuelUsed"].Empty())  // Old ED 2.1 messages has no Fuel used fields
+            if (message == null)
+            {
+                return null;
+            }
+
+            if (message["FuelUsed"].Empty() || message["SystemAddress"] == null)  // Old ED 2.1 messages has no Fuel used fields
                 return null;
 
 
@@ -453,7 +458,7 @@ namespace EliteDangerousCore.EDDN
 
         public JObject CreateEDDNMessage(JournalLocation journal)
         {
-            if (!journal.HasCoordinate || journal.StarPosFromEDSM)
+            if (!journal.HasCoordinate || journal.StarPosFromEDSM || journal.SystemAddress == null)
                 return null;
 
             JObject msg = new JObject();
@@ -462,6 +467,11 @@ namespace EliteDangerousCore.EDDN
             msg["$schemaRef"] = GetEDDNJournalSchemaRef();
 
             JObject message = journal.GetJson();
+
+            if (message == null)
+            {
+                return null;
+            }
 
             message = RemoveCommonKeys(message);
             message = RemoveFactionReputation(message);
@@ -482,12 +492,20 @@ namespace EliteDangerousCore.EDDN
             if (!String.Equals(system.Name, journal.StarSystem, StringComparison.InvariantCultureIgnoreCase))
                 return null;
 
+            if (system.SystemAddress == null || journal.SystemAddress == null || system.SystemAddress != journal.SystemAddress)
+                return null;
+
             JObject msg = new JObject();
 
             msg["header"] = Header();
             msg["$schemaRef"] = GetEDDNJournalSchemaRef();
 
             JObject message = journal.GetJson();
+
+            if (message == null)
+            {
+                return null;
+            }
 
             message = RemoveCommonKeys(message);
             message = RemoveStationEconomyKeys(message);
@@ -496,9 +514,6 @@ namespace EliteDangerousCore.EDDN
             message.Remove("ActiveFine");
 
             message["StarPos"] = new JArray(new float[] { (float)system.X, (float)system.Y, (float)system.Z });
-
-            if (system.SystemAddress != null && message["SystemAddress"] == null)
-                message["SystemAddress"] = system.SystemAddress;
 
             message = FilterJournalEvent(message, AllowedFieldsDocked);
 
@@ -517,6 +532,11 @@ namespace EliteDangerousCore.EDDN
             msg["$schemaRef"] = GetEDDNJournalSchemaRef();
 
             JObject message = journal.GetJson();
+
+            if (message == null)
+            {
+                return null;
+            }
 
             message = RemoveCommonKeys(message);
 
@@ -567,6 +587,11 @@ namespace EliteDangerousCore.EDDN
 
             JObject message = journal.GetJson();
 
+            if (message == null)
+            {
+                return null;
+            }
+
             message = RemoveCommonKeys(message);
 
             message["StarPos"] = new JArray(new float[] { (float)x, (float)y, (float)z });
@@ -616,6 +641,11 @@ namespace EliteDangerousCore.EDDN
 
             JObject message = journal.GetJson();
 
+            if (message == null)
+            {
+                return null;
+            }
+
             message = RemoveCommonKeys(message);
 
             message["StarPos"] = new JArray(new float[] { (float)x, (float)y, (float)z });
@@ -629,6 +659,9 @@ namespace EliteDangerousCore.EDDN
 
         public JObject CreateEDDNMessage(JournalScan journal, ISystem system)
         {
+            if (system.SystemAddress == null)
+                return null;
+
             JObject msg = new JObject();
 
             msg["header"] = Header();
@@ -636,11 +669,15 @@ namespace EliteDangerousCore.EDDN
 
             JObject message = journal.GetJson();
 
+            if (message == null)
+            {
+                return null;
+            }
+
             message["StarSystem"] = system.Name;
             message["StarPos"] = new JArray(new float[] { (float)system.X, (float)system.Y, (float)system.Z });
 
-            if (system.SystemAddress != null)
-                message["SystemAddress"] = system.SystemAddress;
+            message["SystemAddress"] = system.SystemAddress;
 
             if (message["Materials"] != null && message["Materials"] is JArray)
             {
