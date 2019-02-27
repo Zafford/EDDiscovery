@@ -26,8 +26,9 @@ namespace EDDiscovery.Icons
 {
     public static class IconSet
     {
+        public static Dictionary<string, Image> Icons { get; private set; }
+
         private static Dictionary<string, Image> defaultIcons;
-        private static Dictionary<string, Image> icons;
 
         static IconSet()
         {
@@ -46,18 +47,17 @@ namespace EDDiscovery.Icons
                     defaultIcons[name] = img;
                 }
             }
-        }
 
-        private static void InitLegacyIcons()
-        {
-            icons["Legacy.settings"] = IconSet.GetIcon("Controls.Main.Tools.Settings");             // from use by action system..
-            icons["Legacy.missioncompleted"] = IconSet.GetIcon("Journal.MissionCompleted");
         }
 
         public static void ResetIcons()
         {
-            icons = defaultIcons.ToArray().ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.InvariantCultureIgnoreCase);
-            InitLegacyIcons();
+            Icons = defaultIcons.ToArray().ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.InvariantCultureIgnoreCase);
+
+            // alias names used in older action packs to new locations
+            Icons["settings"] = IconSet.GetIcon("Controls.Main.Tools.Settings");             // from use by action system..
+            Icons["missioncompleted"] = IconSet.GetIcon("Journal.MissionCompleted");
+            Icons["speaker"] = IconSet.GetIcon("Legacy.speaker");
         }
 
         public static void LoadIconsFromDirectory(string path)      // tested 1/feb/2018
@@ -82,10 +82,10 @@ namespace EDDiscovery.Icons
                         continue;
                     }
 
-                    if (!icons.ContainsKey(name))
+                    if (!Icons.ContainsKey(name))
                         System.Diagnostics.Debug.WriteLine("Icon Pack new unknown " + name);
 
-                    icons[name] = img;
+                    Icons[name] = img;
                 }
             }
         }
@@ -121,10 +121,10 @@ namespace EDDiscovery.Icons
                                 continue;
                             }
 
-                            if (!icons.ContainsKey(name))
+                            if (!Icons.ContainsKey(name))
                                 System.Diagnostics.Debug.WriteLine("Icon Pack new unknown " + name);
 
-                            icons[name] = img;
+                            Icons[name] = img;
                         }
                     }
                 }
@@ -186,18 +186,13 @@ namespace EDDiscovery.Icons
 
         public static Image GetIcon(string name)
         {
-            if (icons == null)      // seen designer barfing over this
+            if (Icons == null)      // seen designer barfing over this
                 return null;
-
-            if (!name.Contains("."))
-            {
-                name = "Legacy." + name;
-            }
 
             //System.Diagnostics.Debug.WriteLine("ICON " + name);
 
-            if (icons.ContainsKey(name))            // written this way so you can debug step it.
-                return icons[name];
+            if (Icons.ContainsKey(name))            // written this way so you can debug step it.
+                return Icons[name];
             else if (defaultIcons.ContainsKey(name))
                 return defaultIcons[name];
             else

@@ -32,8 +32,8 @@ namespace EliteDangerousCore.JournalEvents
         public long? SystemAddress { get; set; }
         public bool StarPosFromEDSM { get; set; }
 
-        public string Faction { get; set; }         // System Faction
-        public string FactionState { get; set; }    
+        public string Faction { get; set; }         // System Faction - keep name for backwards compat.
+        public string FactionState { get; set; }    // System Faction State - keep name for backwards compat.
         public string Allegiance { get; set; }
         public string Economy { get; set; }
         public string Economy_Localised { get; set; }
@@ -57,7 +57,7 @@ namespace EliteDangerousCore.JournalEvents
         public class FactionInformation
         {
             public string Name { get; set; }
-            public string FactionState { get; set; }
+            public string FactionState { get; set; }    
             public string Government { get; set; }
             public double Influence { get; set; }
             public string Allegiance { get; set; }
@@ -85,7 +85,7 @@ namespace EliteDangerousCore.JournalEvents
             public string State { get; set; }
         }
 
-        protected JournalLocOrJump(DateTime utc, ISystem sys, int synced, JournalTypeEnum jtype) : base(utc, synced, jtype)
+        protected JournalLocOrJump(DateTime utc, ISystem sys, JournalTypeEnum jtype, bool edsmsynced ) : base(utc, jtype, edsmsynced)
         {
             StarSystem = sys.Name;
             StarPos = new EMK.LightGeometry.Vector3((float)sys.X, (float)sys.Y, (float)sys.Z);
@@ -115,8 +115,20 @@ namespace EliteDangerousCore.JournalEvents
 
             SystemAddress = evt["SystemAddress"].LongNull();
 
-            Faction = JSONObjectExtensions.GetMultiStringDef(evt, new string[] { "SystemFaction", "Faction" });
-            FactionState = evt["FactionState"].Str();           // PRE 2.3 .. not present in newer files, fixed up in next bit of code (but see 3.3.2 as its been incorrectly reintroduced)
+            JToken jk = (JToken)evt["SystemFaction"];
+            if (jk != null && jk.Type == JTokenType.Object)     // new 3.03
+            {
+                JObject jo = jk as JObject;
+                Faction = jk["Name"].Str();                // system faction pick up
+                FactionState = jk["FactionState"].Str();
+            }
+            else
+            {
+                // old pre 3.3.3 had this - for system faction
+                Faction = JSONObjectExtensions.GetMultiStringDef(evt, new string[] { "SystemFaction", "Faction" });
+                FactionState = evt["FactionState"].Str();           // PRE 2.3 .. not present in newer files, fixed up in next bit of code (but see 3.3.2 as its been incorrectly reintroduced)
+            }
+
             Factions = evt["Factions"]?.ToObjectProtected<FactionInformation[]>()?.OrderByDescending(x => x.Influence)?.ToArray();  // POST 2.3
 
             if (Factions != null)
@@ -249,7 +261,17 @@ namespace EliteDangerousCore.JournalEvents
 
             MarketID = evt["MarketID"].LongNull();
 
-            StationFaction = evt["StationFaction"].Str();       // 3.3.2 empty before
+            // station data only if docked..
+
+            JToken jk = (JToken)evt["StationFaction"];  // 3.3.3 post
+
+            if ( jk != null && jk.Type == JTokenType.Object)
+            {
+                JObject jo = jk as JObject;
+                StationFaction = jk["Name"].Str();                // system faction pick up
+                StationFactionState = jk["FactionState"].Str();
+            }
+
             StationGovernment = evt["StationGovernment"].Str();       // 3.3.2 empty before
             StationGovernment_Localised = evt["StationGovernment_Localised"].Str();       // 3.3.2 empty before
             StationAllegiance = evt["StationAllegiance"].Str();       // 3.3.2 empty before
@@ -273,6 +295,7 @@ namespace EliteDangerousCore.JournalEvents
 
         // 3.3.2 will be empty/null for previous logs.
         public string StationFaction { get; set; }
+        public string StationFactionState { get; set; }
         public string StationGovernment { get; set; }
         public string StationGovernment_Localised { get; set; }
         public string StationAllegiance { get; set; }
@@ -280,28 +303,34 @@ namespace EliteDangerousCore.JournalEvents
         public JournalDocked.Economies[] StationEconomyList { get; set; }        // may be null
 
         public override string SummaryName(ISystem sys) 
+        {
+            if (Docked)
+                return string.Format("At {0}".Tx(this, "AtStat"), StationName);
+            else
             {
-                if (Docked)
-                    return string.Format("At {0}".Tx(this, "AtStat"), StationName);
-                else if (Latitude.HasValue && Longitude.HasValue)
-                    return string.Format("Landed on {0}".Tx(this, "LND"), Body);
+                string bodyname = Body.HasChars() ? Body.ReplaceIfStartsWith(StarSystem) : StarSystem;
+                if (Latitude.HasValue && Longitude.HasValue)
+                    return string.Format("Landed on {0}".Tx(this, "LND"), bodyname);
                 else
-                    return string.Format("At {0}".Tx(this, "AtStar"), StarSystem);
+                    return string.Format("At {0}".Tx(this, "AtStar"), bodyname);
             }
+
+        }
 
         public override void FillInformation(out string info, out string detailed) 
         {
             if (Docked)
             {
                 info = BaseUtils.FieldBuilder.Build("Type ".Txb(this), StationType, "< in system ".Txb(this), StarSystem);
-                detailed = BaseUtils.FieldBuilder.Build("<;(Wanted) ".Txb(this), Wanted, "Allegiance:".Txb(this), Allegiance, "Economy:".Txb(this), Economy_Localised, "Government:".Txb(this), Government_Localised, "Security:".Txb(this), Security_Localised);
+
+                detailed = BaseUtils.FieldBuilder.Build("<;(Wanted) ".Txb(this), Wanted, "Faction:".Txb(this), StationFaction, "Allegiance:".Txb(this), Allegiance, "Economy:".Txb(this), Economy_Localised, "Government:".Txb(this), Government_Localised, "Security:".Txb(this), Security_Localised);
 
                 if (Factions != null)
                 {
                     foreach (FactionInformation f in Factions)
                     {
                         detailed += Environment.NewLine;
-                        detailed += BaseUtils.FieldBuilder.Build("", f.Name, "State:".Txb(this), f.FactionState, "Government:".Txb(this), f.Government,
+                        detailed += BaseUtils.FieldBuilder.Build("", f.Name, "State:".Txb(this), f.FactionState.SplitCapsWord(), "Government:".Txb(this), f.Government,
                             "Inf:;%".Txb(this), (int)(f.Influence * 100), "Allegiance:".Txb(this), f.Allegiance, "Happiness:".Txb(this), f.Happiness_Localised,
                             "Reputation:;%;N1".Txb(this), f.MyReputation,
                             ";Squadron System".Txb(this), f.SquadronFaction, 
@@ -339,7 +368,7 @@ namespace EliteDangerousCore.JournalEvents
             }
             else
             {
-                info = BaseUtils.FieldBuilder.Build("In space near ".Txb(this), Body, "< of type ".Txb(this), BodyType);
+                info = "In space near ".Txb(this) + BodyType + " " + Body;
                 detailed = "";
             }
         }
@@ -370,7 +399,7 @@ namespace EliteDangerousCore.JournalEvents
             EDSMFirstDiscover = evt["EDD_EDSMFirstDiscover"].Bool(false);
         }
 
-        public JournalFSDJump(DateTime utc, ISystem sys, int colour, bool first, int synced) : base(utc, sys, synced, JournalTypeEnum.FSDJump)
+        public JournalFSDJump(DateTime utc, ISystem sys, int colour, bool first, bool edsmsynced) : base(utc, sys, JournalTypeEnum.FSDJump, edsmsynced)
         {
             MapColor = colour;
             EDSMFirstDiscover = first;
@@ -461,7 +490,7 @@ namespace EliteDangerousCore.JournalEvents
             shp.FSDJump(this);
         }
 
-        public void UpdateMapColour(int mapcolour)
+        public void SetMapColour(int mapcolour)
         {
             using (SQLiteConnectionUser cn = new SQLiteConnectionUser(utc: true))
             {

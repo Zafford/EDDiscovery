@@ -16,6 +16,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -94,6 +95,7 @@ namespace EliteDangerousCore.JournalEvents
         public bool? nLandable { get; set; }                        // direct
         public bool IsLandable { get { return nLandable.HasValue && nLandable.Value; } }
         public double? nMassEM { get; set; }                        // direct, not in description of event, mass in EMs
+        public double? nMassMM { get; set; }                        // only if nMassEM is set, moon mass in MMs
 
         public bool HasMaterials { get { return Materials != null && Materials.Any(); } }
         public Dictionary<string, double> Materials { get; set; }       // fdname and name is the same for materials on planets.  name is lower case
@@ -117,7 +119,18 @@ namespace EliteDangerousCore.JournalEvents
             }
         }
 
-        public int EstimatedValue { get; private set; }           // Currently calculated EstimatedValue.  May change after scanning it
+        public bool Mapped { get { return mapped;}  }                          // affects prices
+        public bool EfficientMapped { get { return efficientmapped; } }                          // affects prices
+        public int EstimatedValue { get; private set; }           // Current Estimated Value
+        public int EstimatedValueFirstDiscoveredFirstMapped { get; private set; }           // 0 if not mapped
+        public int EstimatedValueFirstMapped { get; private set; }                          // 0 if not mapped
+
+        public void SetMapped(bool m, bool e)
+        {
+            mapped = m; efficientmapped = e; EstimateScanValue(); 
+        }
+
+        private bool mapped, efficientmapped;
 
         // Constants:
 
@@ -128,7 +141,9 @@ namespace EliteDangerousCore.JournalEvents
         public const double oneEarthRadius_m = 6371000;
         public const double oneAtmosphere_Pa = 101325;
         public const double oneGee_m_s2 = 9.80665;
-        public const double oneMoon_MT = 73420000000000;
+        public const double oneEarth_MT = 5.972e15;        // mega tons, 1 meta ton = 1e6 tons = 1e9 kg (google 5.972e21 tons)
+        public const double oneMoon_MT = 7.34767309e13;     // mega tons, 1 meta ton = 1e6 tons = 1e9 kg
+        public const double EarthMoonMassRatio = oneEarth_MT/oneMoon_MT; 
 
         // astrometric
         public const double oneLS_m = 299792458;
@@ -247,6 +262,8 @@ namespace EliteDangerousCore.JournalEvents
             Volcanism = evt["Volcanism"].StrNull();
             VolcanismID = Bodies.VolcanismStr2Enum(Volcanism, out VolcanismProperty);
             nMassEM = evt["MassEM"].DoubleNull();
+            if (nMassEM.HasValue)
+                nMassMM = nMassEM.Value * EarthMoonMassRatio;
             nSurfaceGravity = evt["SurfaceGravity"].DoubleNull();
             if (nSurfaceGravity.HasValue)
                 nSurfaceGravityG = nSurfaceGravity / oneGee_m_s2;
@@ -361,7 +378,7 @@ namespace EliteDangerousCore.JournalEvents
                 EDSMDiscoveryUTC = discovery["date"].DateTimeUTC();
             }
 
-            EstimateScanValue(false, false);                        // do the basic no mapped no efficency map as the basic formula
+            EstimateScanValue();                        // do the basic no mapped no efficency map as the basic formula
         }
 
         #region Information Returns
@@ -378,10 +395,32 @@ namespace EliteDangerousCore.JournalEvents
             else if (ScanType.Contains("Nav"))
                 text = "Nav scan of {0}".Tx(this);
 
-            if (sys != null && BodyName.Length > sys.Name.Length) //paranoid on sys, it should always be there, but..
-                return string.Format(text, BodyName.Substring(sys.Name.Length).Trim());
-            else
-                return string.Format(text, BodyName); 
+            return string.Format(text, BodyName.ReplaceIfStartsWith(sys.Name)); 
+        }
+
+        public override string EventFilterName
+        {
+            get
+            {
+                if (ScanType == "AutoScan" )
+                    return "Scan Auto";
+                else if (ScanType == "Basic")
+                    return "Scan Basic";
+                else if (ScanType.Contains("Nav"))
+                    return "Scan Nav";
+                else
+                    return base.EventFilterName;
+            }
+        }
+
+        static public List<Tuple<string, string, Image>> FilterItems()
+        {
+            Type t = typeof(JournalScan);
+            return new List<Tuple<string, string, Image>>() {
+                new Tuple<string, string,Image>( "Scan Auto", "Scan Auto".Tx(t), JournalEntry.JournalTypeIcons[JournalTypeEnum.Scan] ),
+                new Tuple<string,string,Image>( "Scan Basic", "Scan Basic".Tx(t), JournalEntry.JournalTypeIcons[JournalTypeEnum.Scan] ),
+                new Tuple<string,string,Image>( "Scan Nav", "Scan Nav".Tx(t), JournalEntry.JournalTypeIcons[JournalTypeEnum.Scan] ),
+            };
         }
 
         public override void FillInformation(out string info, out string detailed)  
@@ -407,7 +446,15 @@ namespace EliteDangerousCore.JournalEvents
                 if (g.HasValue)
                     g = g / oneGee_m_s2;
 
-                info = BaseUtils.FieldBuilder.Build("", PlanetClass, "Mass:;EM;0.00".Tx(this,"MEM"), nMassEM, 
+                double? mass = nMassEM;
+                string mstr = "Mass:;EM;0.00".Tx(this, "MEM");
+                if (mass.HasValue && mass < 0.01)
+                {
+                    mass = nMassMM.Value;
+                    mstr = "Mass:;MM;0.00".Tx(this, "MMoM");
+                }
+
+                info = BaseUtils.FieldBuilder.Build( "", PlanetClass, mstr, mass,
                                                 "<;, Landable".Tx(this), IsLandable, 
                                                 "<;, Terraformable".Tx(this), TerraformState == "Terraformable", "", Atmosphere, 
                                                  "Gravity:;G;0.0".Tx(this), g, 
@@ -472,7 +519,12 @@ namespace EliteDangerousCore.JournalEvents
                     scanText.AppendFormat("Solar Masses: {0:0.00}\n".Tx(this), nStellarMass.Value);
 
                 if (nMassEM.HasValue)
-                    scanText.AppendFormat("Earth Masses: {0:0.0000}\n".Tx(this), nMassEM.Value);
+                {
+                    if (nMassEM < 0.01)
+                        scanText.AppendFormat("Moon Masses: {0:0.00}\n".Tx(this), nMassMM.Value);
+                    else
+                        scanText.AppendFormat("Earth Masses: {0:0.00}\n".Tx(this), nMassEM.Value);
+                }
 
                 if (nRadius.HasValue)
                 {
@@ -588,8 +640,19 @@ namespace EliteDangerousCore.JournalEvents
             if (scanText.Length > 0 && scanText[scanText.Length - 1] == '\n')
                 scanText.Remove(scanText.Length - 1, 1);
 
-            if (EstimatedValue>0)
-                scanText.AppendFormat("\nEstimated value: {0:N0}".Tx(this,"EV"), EstimatedValue);
+            if (EstimatedValue > 0)
+            {
+                scanText.AppendFormat("\nEstimated value: {0:N0}".Tx(this, "EV"), EstimatedValue);
+                if (Mapped)
+                {
+                    scanText.Append(" " + "Mapped".Tx(this, "MPI"));
+                    if (EfficientMapped)
+                        scanText.Append(" " + "Efficiently".Tx(this, "MPIE"));
+
+                    scanText.AppendFormat("\nFirst Discovered+Mapped value: {0:N0}".Tx(this, "EVFD"), EstimatedValueFirstDiscoveredFirstMapped);
+                    scanText.AppendFormat("\nFirst Mapped value: {0:N0}".Tx(this, "EVFM"), EstimatedValueFirstMapped);
+                }
+            }
 
             if (EDSMDiscoveryCommander != null)
                 scanText.AppendFormat("\n\nDiscovered by {0} on {1}".Tx(this, "DB"), EDSMDiscoveryCommander, EDSMDiscoveryUTC.ToStringZulu());
@@ -1035,34 +1098,25 @@ namespace EliteDangerousCore.JournalEvents
 
         #region Estimated Value
 
-        private bool calculatedValue = false;
-        private bool valueCalculatedWithMappingMultiplier = false;
-
-        public int EstimateScanValue(bool mapped = false, bool efficient = false)       // call to estimate scan value given these parameters. Updates EstimatedValue
+        private void EstimateScanValue()       // call to estimate scan value given these parameters. Updates EstimatedValue
         {
             // see https://forums.frontier.co.uk/showthread.php/232000-Exploration-value-formulae/ for detail
 
             if (EventTimeUTC < new DateTime(2017, 4, 11, 12, 0, 0, 0, DateTimeKind.Utc))
             {
                 EstimatedValue = EstimatedValueED22();
-                return EstimatedValue;
+                return;
             }
 
             if (EventTimeUTC < new DateTime(2018, 12, 11, 9, 0, 0, DateTimeKind.Utc))
             {
                 EstimatedValue = EstimatedValue32();
-                return EstimatedValue;
+                return;
             }
 
             // 3.3 onwards
 
             //System.Diagnostics.Debug.WriteLine("Scan calc " + mapped + " ef " + efficient + " Current " + EstimatedValue);
-
-            if ( calculatedValue && ( mapped == false || valueCalculatedWithMappingMultiplier == true)) // we have a estimate already, or a better estimate with mapped.
-                return EstimatedValue;
-
-            calculatedValue = true;
-            valueCalculatedWithMappingMultiplier = mapped;                                  // remember..
 
             double kValue;
 
@@ -1146,17 +1200,20 @@ namespace EliteDangerousCore.JournalEvents
 
                     double mass = nMassEM.HasValue ? nMassEM.Value : 1.0;
 
-                    double mapMultiplier;
-                    if (mapped)
-                        mapMultiplier = 3.3333333333 * (efficient ? 1.25 : 1);
+                    if (Mapped)
+                    {
+                        EstimatedValue = (int)PlanetValue33(kValue, mass, 3.3333333333 * (EfficientMapped ? 1.25 : 1));
+                        EstimatedValueFirstDiscoveredFirstMapped = (int)PlanetValue33(kValue, mass, 3.699622554 * (EfficientMapped ? 1.25 : 1));
+                        EstimatedValueFirstMapped = (int)PlanetValue33(kValue, mass, 8.0956 * (EfficientMapped ? 1.25 : 1));
+                    }
                     else
-                        mapMultiplier = 1;
+                    {
+                        EstimatedValue = (int)PlanetValue33(kValue, mass, 1);
+                        EstimatedValueFirstDiscoveredFirstMapped = EstimatedValueFirstMapped = 0;
+                    }
 
-                    EstimatedValue = (int)PlanetValue33(kValue, mass, mapMultiplier);
                 }
             }
-
-            return EstimatedValue;
         }
 
         private double StarValue32And33(double k, double m)

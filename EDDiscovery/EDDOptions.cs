@@ -54,6 +54,10 @@ namespace EDDiscovery
             {
                 IconsPath = toeol ? ca.Rest() : ca.NextEmpty();
             }
+            else if (optname == "-notificationfolder")
+            {
+                NotificationFolderOverride = toeol ? ca.Rest() : ca.NextEmpty();
+            }
             else if (optname == "-tracelog")
             {
                 TraceLog = toeol ? ca.Rest() : ca.NextEmpty();
@@ -77,6 +81,7 @@ namespace EDDiscovery
                     case "checkgithub": CheckGithubFiles = true; break;
                     case "nocheckrelease": CheckRelease = false; break;
                     case "nocheckgithub": CheckGithubFiles = false; break;
+                    case "disablemerge": DisableMerge = true; break;
                     case "edsmbeta":
                         EDSMClass.ServerAddress = "http://beta.edsm.net:8080/";
                         break;
@@ -149,6 +154,8 @@ namespace EDDiscovery
         public bool CheckGithubFiles { get; private set; }
         public bool ResetLanguage { get; set; }
         public bool SafeMode { get; set; }
+        public bool DisableMerge { get; set; }
+        public string NotificationFolderOverride { get; set; }      // normally null..
 
         public string SubAppDirectory(string subfolder)     // ensures its there.. name without \ slashes
         {
@@ -159,7 +166,7 @@ namespace EDDiscovery
         }
 
         public string ExploreAppDirectory() { return SubAppDirectory("Exploration"); }
-        public string NotificationsAppDirectory() { return SubAppDirectory("Notifications"); }
+        public string NotificationsAppDirectory() { return NotificationFolderOverride ?? SubAppDirectory("Notifications"); }
         public string ExpeditionsAppDirectory() { return SubAppDirectory("Expeditions"); }
         public string ActionsAppDirectory() { return SubAppDirectory("Actions"); }
         public string VideosAppDirectory() { return SubAppDirectory("Videos"); }

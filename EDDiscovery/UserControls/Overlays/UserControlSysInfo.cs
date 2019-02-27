@@ -110,6 +110,7 @@ namespace EDDiscovery.UserControls
             discoveryform.OnNewTarget += RefreshTargetDisplay;
             discoveryform.OnNoteChanged += OnNoteChanged;
             discoveryform.OnEDSMSyncComplete += Discoveryform_OnEDSMSyncComplete;
+            discoveryform.OnNewUIEvent += Discoveryform_OnNewUIEvent;
 
             panelFD.BackgroundImage = EDDiscovery.Icons.Controls.notfirstdiscover;      // just to hide it during boot up
 
@@ -137,6 +138,7 @@ namespace EDDiscovery.UserControls
             discoveryform.OnNewTarget -= RefreshTargetDisplay;
             discoveryform.OnNoteChanged -= OnNoteChanged;
             discoveryform.OnEDSMSyncComplete -= Discoveryform_OnEDSMSyncComplete;
+            discoveryform.OnNewUIEvent -= Discoveryform_OnNewUIEvent;
             SQLiteDBClass.PutSettingString(DbOSave, BaseUtils.LineStore.ToString(Lines));
             SQLiteDBClass.PutSettingInt(DbSelection, Selection);
         }
@@ -154,6 +156,12 @@ namespace EDDiscovery.UserControls
         {
             //System.Diagnostics.Debug.WriteLine("EDSM SYNC COMPLETED with " + count + " '" + syslist + "'");
             Display(last_he, discoveryform.history);
+        }
+
+        private void Discoveryform_OnNewUIEvent(UIEvent obj)
+        {
+            if ( obj is EliteDangerousCore.UIEvents.UIFuel) // fuel UI update the SI information globally.
+                Display(last_he, discoveryform.history);
         }
 
         bool neverdisplayed = true;
@@ -746,7 +754,7 @@ namespace EDDiscovery.UserControls
             //BaseUtils.LineStore.DumpOrder(Lines, "Reset");
         }
 
-        void SetPos(ref Point lp, Label lab, Point tp, ExtendedControls.TextBoxBorder box, int vspacing , int i )
+        void SetPos(ref Point lp, Label lab, Point tp, ExtendedControls.ExtTextBox box, int vspacing , int i )
         {
             lab.Location = lp;
             box.Location = tp;
@@ -755,7 +763,7 @@ namespace EDDiscovery.UserControls
             lp.Y += vspacing;
         }
 
-        void SetPos(ref Point lp, Label lab, Point tp, ExtendedControls.RichTextBoxScroll box, int vspacing , int i)
+        void SetPos(ref Point lp, Label lab, Point tp, ExtendedControls.ExtRichTextBox box, int vspacing , int i)
         {
             lab.Location = lp;
             box.Location = tp;
@@ -764,7 +772,7 @@ namespace EDDiscovery.UserControls
             lp.Y += vspacing;
         }
 
-        void OffsetPos(Point lp, Label lab, Point tp, ExtendedControls.TextBoxBorder box , int i)
+        void OffsetPos(Point lp, Label lab, Point tp, ExtendedControls.ExtTextBox box , int i)
         {
             lab.Location = lp;
             box.Location = tp;
@@ -951,9 +959,9 @@ namespace EDDiscovery.UserControls
             {
                 foreach (Control c in Controls)
                 {
-                    if (c is ExtendedControls.TextBoxBorder)
+                    if (c is ExtendedControls.ExtTextBox)
                     {
-                        ExtendedControls.TextBoxBorder b = c as ExtendedControls.TextBoxBorder;
+                        ExtendedControls.ExtTextBox b = c as ExtendedControls.ExtTextBox;
                         b.ControlBackground = Color.Red;
                         b.BorderStyle = BorderStyle.None;
                         b.BorderColor = Color.Transparent;

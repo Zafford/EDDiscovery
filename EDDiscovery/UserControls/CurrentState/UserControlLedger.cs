@@ -30,9 +30,9 @@ namespace EDDiscovery.UserControls
 {
     public partial class UserControlLedger : UserControlCommonBase
     {
-        EventFilterSelector cfs = new EventFilterSelector();
+        FilterSelector cfs; 
 
-        private string DbFilterSave { get { return DBName("LedgerGridEventFilter" ); } }
+        private string DbFilterSave { get { return DBName("LedgerGridEventFilter2" ); } }
         private string DbColumnSave { get { return DBName("LedgerGrid" ,  "DGVCol"); } }
         private string DbHistorySave { get { return DBName("LedgerGridEDUIHistory" ); } }
 
@@ -50,9 +50,15 @@ namespace EDDiscovery.UserControls
             dataGridViewLedger.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
             dataGridViewLedger.RowTemplate.Height = 26;
 
-            cfs.AddExtraOption("Cash Transactions".Tx(this), string.Join(";", EliteDangerousCore.JournalEntry.GetListOfEventsWithOptMethod(true, "Ledger")));
+            var jes = EliteDangerousCore.JournalEntry.GetNameImageOfEvents(new string[] { "Ledger" });
+            string cashtype = string.Join(";", jes.Select(x=>x.Item1) ) + ";";
 
-            cfs.Changed += EventFilterChanged;
+            cfs = new FilterSelector(DbFilterSave);
+            cfs.AddAllNone();
+            cfs.AddGroupOption(cashtype, "Cash Transactions".Tx(this),  JournalEntry.JournalTypeIcons[JournalTypeEnum.Bounty]);
+            cfs.AddJournalEntries(new string[] { "Ledger", "LedgerNC" });
+            cfs.Closing += EventFilterChanged;
+
             TravelHistoryFilter.InitaliseComboBox(comboBoxHistoryWindow, DbHistorySave , incldockstartend:false);
 
             discoveryform.OnHistoryChange += Redisplay;
@@ -162,10 +168,7 @@ namespace EDDiscovery.UserControls
         private void buttonFilter_Click(object sender, EventArgs e)
         {
             Button b = sender as Button;
-            cfs.FilterButton(DbFilterSave, b,
-                             discoveryform.theme.TextBackColor, discoveryform.theme.TextBlockColor, discoveryform.theme.GetFontStandardFontSize(), this.FindForm() ,
-                             EliteDangerousCore.JournalEntry.GetListOfEventsWithOptMethod(true, "Ledger", "LedgerNC")
-                             );
+            cfs.Filter( b, this.FindForm());
         }
 
         private void comboBoxHistoryWindow_SelectedIndexChanged(object sender, EventArgs e)
@@ -183,9 +186,10 @@ namespace EDDiscovery.UserControls
             dataGridViewLedger.FilterGridView(textBoxFilter.Text);
         }
 
-        private void EventFilterChanged(object sender, EventArgs e)
+        private void EventFilterChanged(object sender, bool same, Object e)
         {
-            Display(current_mc);
+            if (!same)
+                Display(current_mc);
         }
 
         #region right clicks

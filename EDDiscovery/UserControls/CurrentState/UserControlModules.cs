@@ -52,6 +52,7 @@ namespace EDDiscovery.UserControls
 
             discoveryform.OnHistoryChange += Discoveryform_OnHistoryChange; ;
             discoveryform.OnNewEntry += Discoveryform_OnNewEntry;
+            discoveryform.OnNewUIEvent += Discoveryform_OnNewUIEvent;
         }
 
         public override void ChangeCursorType(IHistoryCursor thc)
@@ -73,6 +74,7 @@ namespace EDDiscovery.UserControls
             uctg.OnTravelSelectionChanged -= Display;
             discoveryform.OnNewEntry -= Discoveryform_OnNewEntry;
             discoveryform.OnHistoryChange -= Discoveryform_OnHistoryChange;
+            discoveryform.OnNewUIEvent -= Discoveryform_OnNewUIEvent;
         }
 
 
@@ -121,6 +123,12 @@ namespace EDDiscovery.UserControls
             comboBoxShips.Enabled = false;
             comboBoxShips.SelectedItem = cursel;
             comboBoxShips.Enabled = true;
+        }
+
+        private void Discoveryform_OnNewUIEvent(UIEvent obj)
+        {
+            if (obj is EliteDangerousCore.UIEvents.UIFuel) // fuel UI update the SI information globally.
+                Display(last_he, discoveryform.history);
         }
 
         public override void InitialDisplay()
@@ -430,8 +438,8 @@ namespace EDDiscovery.UserControls
                 last_si.FuelWarningPercent.ToStringInvariant(), new Point(ctrlleft, 40), new Size(width - ctrlleft - 20, 24), "Enter fuel warning level in % (0 = off, 1-100%)".Tx(this,"TTF"))
                 { numberboxdoubleminimum = 0, numberboxdoublemaximum = 100, numberboxformat = "0.##" });
 
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("OK", typeof(ExtendedControls.ButtonExt), "OK".Tx(), new Point(width - 100, 70), new Size(80, 24), "Press to Accept".Tx(this)));
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("Cancel", typeof(ExtendedControls.ButtonExt), "Cancel".Tx(), new Point(width - 200, 70), new Size(80, 24), "Press to Cancel".Tx(this)));
+            f.Add(new ExtendedControls.ConfigurableForm.Entry("OK", typeof(ExtendedControls.ExtButton), "OK".Tx(), new Point(width - 100, 70), new Size(80, 24), "Press to Accept".Tx(this)));
+            f.Add(new ExtendedControls.ConfigurableForm.Entry("Cancel", typeof(ExtendedControls.ExtButton), "Cancel".Tx(), new Point(width - 200, 70), new Size(80, 24), "Press to Cancel".Tx(this)));
 
             f.Trigger += (dialogname, controlname, tag) =>
             {

@@ -46,60 +46,60 @@ namespace EDDiscovery.UserControls
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserControlSettings));
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.comboBoxCustomHistoryLoadTime = new ExtendedControls.ComboBoxCustom();
-            this.checkBoxShowUIEvents = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxOrderRowsInverted = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxUTC = new ExtendedControls.CheckBoxCustom();
-            this.buttonExtEDSMConfigureArea = new ExtendedControls.ButtonExt();
-            this.checkBoxCustomEDSMEDDBDownload = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxCustomCopyToClipboard = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxCustomMarkHiRes = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxCustomRemoveOriginals = new ExtendedControls.CheckBoxCustom();
-            this.buttonExtScreenshot = new ExtendedControls.ButtonExt();
-            this.checkBoxCustomEnableScreenshots = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxMinimizeToNotifyIcon = new ExtendedControls.CheckBoxCustom();
-            this.comboBoxClickThruKey = new ExtendedControls.ComboBoxCustom();
-            this.checkBoxUseNotifyIcon = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxKeepOnTop = new ExtendedControls.CheckBoxCustom();
-            this.comboBoxTheme = new ExtendedControls.ComboBoxCustom();
-            this.button_edittheme = new ExtendedControls.ButtonExt();
-            this.buttonSaveTheme = new ExtendedControls.ButtonExt();
+            this.comboBoxCustomHistoryLoadTime = new ExtendedControls.ExtComboBox();
+            this.checkBoxShowUIEvents = new ExtendedControls.ExtCheckBox();
+            this.checkBoxOrderRowsInverted = new ExtendedControls.ExtCheckBox();
+            this.checkBoxUTC = new ExtendedControls.ExtCheckBox();
+            this.buttonExtEDSMConfigureArea = new ExtendedControls.ExtButton();
+            this.checkBoxCustomEDSMEDDBDownload = new ExtendedControls.ExtCheckBox();
+            this.checkBoxCustomCopyToClipboard = new ExtendedControls.ExtCheckBox();
+            this.checkBoxCustomMarkHiRes = new ExtendedControls.ExtCheckBox();
+            this.checkBoxCustomRemoveOriginals = new ExtendedControls.ExtCheckBox();
+            this.buttonExtScreenshot = new ExtendedControls.ExtButton();
+            this.checkBoxCustomEnableScreenshots = new ExtendedControls.ExtCheckBox();
+            this.checkBoxMinimizeToNotifyIcon = new ExtendedControls.ExtCheckBox();
+            this.comboBoxClickThruKey = new ExtendedControls.ExtComboBox();
+            this.checkBoxUseNotifyIcon = new ExtendedControls.ExtCheckBox();
+            this.checkBoxKeepOnTop = new ExtendedControls.ExtCheckBox();
+            this.comboBoxTheme = new ExtendedControls.ExtComboBox();
+            this.button_edittheme = new ExtendedControls.ExtButton();
+            this.buttonSaveTheme = new ExtendedControls.ExtButton();
             this.textBoxDefaultZoom = new ExtendedControls.NumberBoxDouble();
-            this.radioButtonHistorySelection = new ExtendedControls.RadioButtonCustom();
-            this.radioButtonCentreHome = new ExtendedControls.RadioButtonCustom();
-            this.textBoxHomeSystem = new ExtendedControls.AutoCompleteTextBox();
+            this.radioButtonHistorySelection = new ExtendedControls.ExtRadioButton();
+            this.radioButtonCentreHome = new ExtendedControls.ExtRadioButton();
+            this.textBoxHomeSystem = new ExtendedControls.ExtTextBoxAutoComplete();
             this.panel_defaultmapcolor = new ExtendedControls.PanelNoTheme();
-            this.buttonEditCommander = new ExtendedControls.ButtonExt();
-            this.btnDeleteCommander = new ExtendedControls.ButtonExt();
-            this.buttonAddCommander = new ExtendedControls.ButtonExt();
-            this.checkBoxCustomResize = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxPanelSortOrder = new ExtendedControls.CheckBoxCustom();
-            this.buttonExtSafeMode = new ExtendedControls.ButtonExt();
+            this.buttonEditCommander = new ExtendedControls.ExtButton();
+            this.btnDeleteCommander = new ExtendedControls.ExtButton();
+            this.buttonAddCommander = new ExtendedControls.ExtButton();
+            this.checkBoxCustomResize = new ExtendedControls.ExtCheckBox();
+            this.checkBoxPanelSortOrder = new ExtendedControls.ExtCheckBox();
+            this.buttonExtSafeMode = new ExtendedControls.ExtButton();
             this.dataGridViewCommanders = new System.Windows.Forms.DataGridView();
             this.ColumnCommander = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.EdsmName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.JournalDirCol = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.NotesCol = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.groupBoxCustomHistoryLoad = new ExtendedControls.GroupBoxCustom();
-            this.comboBoxCustomEssentialEntries = new ExtendedControls.ComboBoxCustom();
+            this.groupBoxCustomHistoryLoad = new ExtendedControls.ExtGroupBox();
+            this.comboBoxCustomEssentialEntries = new ExtendedControls.ExtComboBox();
             this.labelHistoryEssItems = new System.Windows.Forms.Label();
             this.labelHistorySel = new System.Windows.Forms.Label();
-            this.groupBoxCustomEDSM = new ExtendedControls.GroupBoxCustom();
-            this.groupBoxCustomScreenShots = new ExtendedControls.GroupBoxCustom();
-            this.groupBoxPopOuts = new ExtendedControls.GroupBoxCustom();
+            this.groupBoxCustomEDSM = new ExtendedControls.ExtGroupBox();
+            this.groupBoxCustomScreenShots = new ExtendedControls.ExtGroupBox();
+            this.groupBoxPopOuts = new ExtendedControls.ExtGroupBox();
             this.labelTKey = new System.Windows.Forms.Label();
-            this.groupBoxTheme = new ExtendedControls.GroupBoxCustom();
-            this.groupBox3dmap = new ExtendedControls.GroupBoxCustom();
+            this.groupBoxTheme = new ExtendedControls.ExtGroupBox();
+            this.groupBox3dmap = new ExtendedControls.ExtGroupBox();
             this.labelMapCol = new System.Windows.Forms.Label();
             this.labelZoom = new System.Windows.Forms.Label();
             this.labelOpenOn = new System.Windows.Forms.Label();
             this.labelHome = new System.Windows.Forms.Label();
-            this.groupBoxCommanders = new ExtendedControls.GroupBoxCustom();
-            this.dataViewScrollerPanel1 = new ExtendedControls.DataViewScrollerPanel();
-            this.vScrollBarCustom1 = new ExtendedControls.VScrollBarCustom();
-            this.groupBoxCustomLanguage = new ExtendedControls.GroupBoxCustom();
-            this.comboBoxCustomLanguage = new ExtendedControls.ComboBoxCustom();
-            this.groupBoxCustomSafeMode = new ExtendedControls.GroupBoxCustom();
+            this.groupBoxCommanders = new ExtendedControls.ExtGroupBox();
+            this.dataViewScrollerPanel1 = new ExtendedControls.ExtPanelDataGridViewScroll();
+            this.vScrollBarCustom1 = new ExtendedControls.ExtScrollBar();
+            this.groupBoxCustomLanguage = new ExtendedControls.ExtGroupBox();
+            this.comboBoxCustomLanguage = new ExtendedControls.ExtComboBox();
+            this.groupBoxCustomSafeMode = new ExtendedControls.ExtGroupBox();
             this.labelSafeMode = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewCommanders)).BeginInit();
             this.groupBoxCustomHistoryLoad.SuspendLayout();
@@ -165,7 +165,6 @@ namespace EDDiscovery.UserControls
             this.toolTip.SetToolTip(this.checkBoxShowUIEvents, "Show the UI events (such as Music) in the history. The quantity of them can be ve" +
         "ry large");
             this.checkBoxShowUIEvents.UseVisualStyleBackColor = true;
-            this.checkBoxShowUIEvents.CheckedChanged += new System.EventHandler(this.checkBoxShowUIEvents_CheckedChanged);
             // 
             // checkBoxOrderRowsInverted
             // 
@@ -184,7 +183,6 @@ namespace EDDiscovery.UserControls
             this.checkBoxOrderRowsInverted.TickBoxReductionSize = 10;
             this.toolTip.SetToolTip(this.checkBoxOrderRowsInverted, "Number oldest entry 1, latest entry highest");
             this.checkBoxOrderRowsInverted.UseVisualStyleBackColor = true;
-            this.checkBoxOrderRowsInverted.CheckedChanged += new System.EventHandler(this.checkBoxOrderRowsInverted_CheckedChanged);
             // 
             // checkBoxUTC
             // 
@@ -203,7 +201,6 @@ namespace EDDiscovery.UserControls
             this.checkBoxUTC.TickBoxReductionSize = 10;
             this.toolTip.SetToolTip(this.checkBoxUTC, "Display game time (UTC) instead of your local time");
             this.checkBoxUTC.UseVisualStyleBackColor = true;
-            this.checkBoxUTC.CheckedChanged += new System.EventHandler(this.checkBoxUTC_CheckedChanged);
             // 
             // buttonExtEDSMConfigureArea
             // 
@@ -335,7 +332,6 @@ namespace EDDiscovery.UserControls
             this.checkBoxMinimizeToNotifyIcon.TickBoxReductionSize = 10;
             this.toolTip.SetToolTip(this.checkBoxMinimizeToNotifyIcon, "Minimize the main window to the system notification area (system tray) icon.");
             this.checkBoxMinimizeToNotifyIcon.UseVisualStyleBackColor = true;
-            this.checkBoxMinimizeToNotifyIcon.CheckedChanged += new System.EventHandler(this.checkBoxMinimizeToNotifyIcon_CheckedChanged);
             // 
             // comboBoxClickThruKey
             // 
@@ -382,7 +378,6 @@ namespace EDDiscovery.UserControls
             this.checkBoxUseNotifyIcon.TickBoxReductionSize = 10;
             this.toolTip.SetToolTip(this.checkBoxUseNotifyIcon, "Show a system notification area (system tray) icon for EDDiscovery.");
             this.checkBoxUseNotifyIcon.UseVisualStyleBackColor = true;
-            this.checkBoxUseNotifyIcon.CheckedChanged += new System.EventHandler(this.checkBoxUseNotifyIcon_CheckedChanged);
             // 
             // checkBoxKeepOnTop
             // 
@@ -401,7 +396,6 @@ namespace EDDiscovery.UserControls
             this.checkBoxKeepOnTop.TickBoxReductionSize = 10;
             this.toolTip.SetToolTip(this.checkBoxKeepOnTop, "This window, and its children, top");
             this.checkBoxKeepOnTop.UseVisualStyleBackColor = true;
-            this.checkBoxKeepOnTop.CheckedChanged += new System.EventHandler(this.checkBoxKeepOnTop_CheckedChanged);
             // 
             // comboBoxTheme
             // 
@@ -482,7 +476,6 @@ namespace EDDiscovery.UserControls
             this.toolTip.SetToolTip(this.textBoxDefaultZoom, "Set the zoom level of the map. 1 is normal");
             this.textBoxDefaultZoom.Value = 0D;
             this.textBoxDefaultZoom.WordWrap = true;
-            this.textBoxDefaultZoom.ValueChanged += new System.EventHandler(this.textBoxDefaultZoom_ValueChanged);
             // 
             // radioButtonHistorySelection
             // 
@@ -519,7 +512,6 @@ namespace EDDiscovery.UserControls
             this.radioButtonCentreHome.Text = "Home System";
             this.toolTip.SetToolTip(this.radioButtonCentreHome, "Select home system as opening location");
             this.radioButtonCentreHome.UseVisualStyleBackColor = true;
-            this.radioButtonCentreHome.CheckedChanged += new System.EventHandler(this.radioButtonCentreHome_CheckedChanged);
             // 
             // textBoxHomeSystem
             // 
@@ -618,7 +610,6 @@ namespace EDDiscovery.UserControls
             this.toolTip.SetToolTip(this.checkBoxCustomResize, "Check to allow EDD to redraw the screen during main window resize. Only disable i" +
         "f its too slow");
             this.checkBoxCustomResize.UseVisualStyleBackColor = true;
-            this.checkBoxCustomResize.CheckedChanged += new System.EventHandler(this.checkBoxCustomResize_CheckedChanged);
             // 
             // checkBoxPanelSortOrder
             // 
@@ -638,7 +629,6 @@ namespace EDDiscovery.UserControls
             this.toolTip.SetToolTip(this.checkBoxPanelSortOrder, "Panel lists sorted alphanumerically instead of ordered in groups. Note Requires R" +
         "estart");
             this.checkBoxPanelSortOrder.UseVisualStyleBackColor = true;
-            this.checkBoxPanelSortOrder.CheckedChanged += new System.EventHandler(this.checkBoxPanelSortOrder_CheckedChanged);
             // 
             // buttonExtSafeMode
             // 
@@ -1101,61 +1091,61 @@ namespace EDDiscovery.UserControls
         }
 
         #endregion
-        private ExtendedControls.GroupBoxCustom groupBoxCommanders;
-        private ExtendedControls.ButtonExt buttonAddCommander;
+        private ExtendedControls.ExtGroupBox groupBoxCommanders;
+        private ExtendedControls.ExtButton buttonAddCommander;
         private System.Windows.Forms.DataGridView dataGridViewCommanders;
-        private ExtendedControls.GroupBoxCustom groupBox3dmap;
+        private ExtendedControls.ExtGroupBox groupBox3dmap;
         private ExtendedControls.NumberBoxDouble textBoxDefaultZoom;
         private System.Windows.Forms.Label labelZoom;
-        private ExtendedControls.RadioButtonCustom radioButtonHistorySelection;
-        private ExtendedControls.RadioButtonCustom radioButtonCentreHome;
+        private ExtendedControls.ExtRadioButton radioButtonHistorySelection;
+        private ExtendedControls.ExtRadioButton radioButtonCentreHome;
         private System.Windows.Forms.Label labelOpenOn;
         private System.Windows.Forms.Label labelHome;
-        private ExtendedControls.AutoCompleteTextBox textBoxHomeSystem;
-        private ExtendedControls.ComboBoxCustom comboBoxTheme;
+        private ExtendedControls.ExtTextBoxAutoComplete textBoxHomeSystem;
+        private ExtendedControls.ExtComboBox comboBoxTheme;
         private System.Windows.Forms.ToolTip toolTip;
         private ExtendedControls.PanelNoTheme panel_defaultmapcolor;
-        private ExtendedControls.ButtonExt buttonSaveTheme;
+        private ExtendedControls.ExtButton buttonSaveTheme;
         private System.Windows.Forms.Label labelMapCol;
-        private ExtendedControls.ButtonExt button_edittheme;
-        private ExtendedControls.GroupBoxCustom groupBoxTheme;
-        private ExtendedControls.CheckBoxCustom checkBoxOrderRowsInverted;
-        private ExtendedControls.CheckBoxCustom checkBoxKeepOnTop;
-        private ExtendedControls.ButtonExt btnDeleteCommander;
-        private ExtendedControls.CheckBoxCustom checkBoxUTC;
-        private ExtendedControls.DataViewScrollerPanel dataViewScrollerPanel1;
-        private ExtendedControls.VScrollBarCustom vScrollBarCustom1;
-        private ExtendedControls.GroupBoxCustom groupBoxPopOuts;
-        private ExtendedControls.CheckBoxCustom checkBoxMinimizeToNotifyIcon;
-        private ExtendedControls.CheckBoxCustom checkBoxUseNotifyIcon;
-        private ExtendedControls.ButtonExt buttonEditCommander;
+        private ExtendedControls.ExtButton button_edittheme;
+        private ExtendedControls.ExtGroupBox groupBoxTheme;
+        private ExtendedControls.ExtCheckBox checkBoxOrderRowsInverted;
+        private ExtendedControls.ExtCheckBox checkBoxKeepOnTop;
+        private ExtendedControls.ExtButton btnDeleteCommander;
+        private ExtendedControls.ExtCheckBox checkBoxUTC;
+        private ExtendedControls.ExtPanelDataGridViewScroll dataViewScrollerPanel1;
+        private ExtendedControls.ExtScrollBar vScrollBarCustom1;
+        private ExtendedControls.ExtGroupBox groupBoxPopOuts;
+        private ExtendedControls.ExtCheckBox checkBoxMinimizeToNotifyIcon;
+        private ExtendedControls.ExtCheckBox checkBoxUseNotifyIcon;
+        private ExtendedControls.ExtButton buttonEditCommander;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnCommander;
         private System.Windows.Forms.DataGridViewTextBoxColumn EdsmName;
         private System.Windows.Forms.DataGridViewTextBoxColumn JournalDirCol;
         private System.Windows.Forms.DataGridViewTextBoxColumn NotesCol;
-        private ExtendedControls.CheckBoxCustom checkBoxShowUIEvents;
-        private ExtendedControls.ComboBoxCustom comboBoxClickThruKey;
+        private ExtendedControls.ExtCheckBox checkBoxShowUIEvents;
+        private ExtendedControls.ExtComboBox comboBoxClickThruKey;
         private System.Windows.Forms.Label labelTKey;
-        private ExtendedControls.GroupBoxCustom groupBoxCustomScreenShots;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomMarkHiRes;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomRemoveOriginals;
-        private ExtendedControls.ButtonExt buttonExtScreenshot;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomEnableScreenshots;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomCopyToClipboard;
-        private ExtendedControls.GroupBoxCustom groupBoxCustomEDSM;
-        private ExtendedControls.ButtonExt buttonExtEDSMConfigureArea;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomEDSMEDDBDownload;
-        private ExtendedControls.GroupBoxCustom groupBoxCustomHistoryLoad;
-        private ExtendedControls.ComboBoxCustom comboBoxCustomHistoryLoadTime;
+        private ExtendedControls.ExtGroupBox groupBoxCustomScreenShots;
+        private ExtendedControls.ExtCheckBox checkBoxCustomMarkHiRes;
+        private ExtendedControls.ExtCheckBox checkBoxCustomRemoveOriginals;
+        private ExtendedControls.ExtButton buttonExtScreenshot;
+        private ExtendedControls.ExtCheckBox checkBoxCustomEnableScreenshots;
+        private ExtendedControls.ExtCheckBox checkBoxCustomCopyToClipboard;
+        private ExtendedControls.ExtGroupBox groupBoxCustomEDSM;
+        private ExtendedControls.ExtButton buttonExtEDSMConfigureArea;
+        private ExtendedControls.ExtCheckBox checkBoxCustomEDSMEDDBDownload;
+        private ExtendedControls.ExtGroupBox groupBoxCustomHistoryLoad;
+        private ExtendedControls.ExtComboBox comboBoxCustomHistoryLoadTime;
         private System.Windows.Forms.Label labelHistorySel;
-        private ExtendedControls.GroupBoxCustom groupBoxCustomLanguage;
-        private ExtendedControls.ComboBoxCustom comboBoxCustomLanguage;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomResize;
-        private ExtendedControls.CheckBoxCustom checkBoxPanelSortOrder;
-        private ExtendedControls.GroupBoxCustom groupBoxCustomSafeMode;
-        private ExtendedControls.ButtonExt buttonExtSafeMode;
+        private ExtendedControls.ExtGroupBox groupBoxCustomLanguage;
+        private ExtendedControls.ExtComboBox comboBoxCustomLanguage;
+        private ExtendedControls.ExtCheckBox checkBoxCustomResize;
+        private ExtendedControls.ExtCheckBox checkBoxPanelSortOrder;
+        private ExtendedControls.ExtGroupBox groupBoxCustomSafeMode;
+        private ExtendedControls.ExtButton buttonExtSafeMode;
         private System.Windows.Forms.Label labelSafeMode;
-        private ExtendedControls.ComboBoxCustom comboBoxCustomEssentialEntries;
+        private ExtendedControls.ExtComboBox comboBoxCustomEssentialEntries;
         private System.Windows.Forms.Label labelHistoryEssItems;
     }
 }

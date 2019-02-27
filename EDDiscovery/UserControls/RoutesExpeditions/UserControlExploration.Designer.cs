@@ -54,9 +54,9 @@ namespace EDDiscovery.UserControls
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.panelRouteInfo = new System.Windows.Forms.Panel();
-            this.textBoxFileName = new ExtendedControls.TextBoxBorder();
+            this.textBoxFileName = new ExtendedControls.ExtTextBox();
             this.labelFilename = new System.Windows.Forms.Label();
-            this.textBoxRouteName = new ExtendedControls.TextBoxBorder();
+            this.textBoxRouteName = new ExtendedControls.ExtTextBox();
             this.labelName = new System.Windows.Forms.Label();
             this.contextMenuCopyPaste = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,7 +66,7 @@ namespace EDDiscovery.UserControls
             this.setTargetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editBookmarkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dataGridViewExplore = new System.Windows.Forms.DataGridView();
-            this.ColumnSystemName = new ExtendedControls.AutoCompleteDGVColumn();
+            this.ColumnSystemName = new ExtendedControls.ExtDataGridViewColumnAutoComplete();
             this.ColumnDist = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnX = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnY = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -76,8 +76,8 @@ namespace EDDiscovery.UserControls
             this.ColumnPrimaryStar = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnInfo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColumnNote = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataViewScrollerPanel1 = new ExtendedControls.DataViewScrollerPanel();
-            this.vScrollBarCustom1 = new ExtendedControls.VScrollBarCustom();
+            this.dataViewScrollerPanel1 = new ExtendedControls.ExtPanelDataGridViewScroll();
+            this.vScrollBarCustom1 = new ExtendedControls.ExtScrollBar();
             this.toolStrip.SuspendLayout();
             this.panelRouteInfo.SuspendLayout();
             this.contextMenuCopyPaste.SuspendLayout();
@@ -87,6 +87,7 @@ namespace EDDiscovery.UserControls
             // 
             // toolStrip
             // 
+            this.toolStrip.AutoSize = false;
             this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButtonNew,
@@ -99,60 +100,66 @@ namespace EDDiscovery.UserControls
             this.toolStripSeparator1});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
-            this.toolStrip.Size = new System.Drawing.Size(817, 25);
+            this.toolStrip.Size = new System.Drawing.Size(817, 32);
             this.toolStrip.TabIndex = 0;
             // 
             // toolStripButtonNew
             // 
             this.toolStripButtonNew.Image = global::EDDiscovery.Icons.Controls.Exploration_New;
+            this.toolStripButtonNew.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonNew.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonNew.Name = "toolStripButtonNew";
-            this.toolStripButtonNew.Size = new System.Drawing.Size(51, 22);
+            this.toolStripButtonNew.Size = new System.Drawing.Size(59, 29);
             this.toolStripButtonNew.Text = "New";
             this.toolStripButtonNew.Click += new System.EventHandler(this.toolStripButtonNew_Click);
             // 
             // toolStripButtonLoad
             // 
             this.toolStripButtonLoad.Image = global::EDDiscovery.Icons.Controls.Exploration_Load;
+            this.toolStripButtonLoad.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonLoad.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonLoad.Name = "toolStripButtonLoad";
-            this.toolStripButtonLoad.Size = new System.Drawing.Size(53, 22);
+            this.toolStripButtonLoad.Size = new System.Drawing.Size(61, 29);
             this.toolStripButtonLoad.Text = "Load";
             this.toolStripButtonLoad.Click += new System.EventHandler(this.toolStripButtonLoad_Click);
             // 
             // toolStripButtonSave
             // 
             this.toolStripButtonSave.Image = global::EDDiscovery.Icons.Controls.Exploration_Save;
+            this.toolStripButtonSave.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonSave.Name = "toolStripButtonSave";
-            this.toolStripButtonSave.Size = new System.Drawing.Size(51, 22);
+            this.toolStripButtonSave.Size = new System.Drawing.Size(59, 29);
             this.toolStripButtonSave.Text = "Save";
             this.toolStripButtonSave.Click += new System.EventHandler(this.toolStripButtonSave_Click);
             // 
             // tsbAddSystems
             // 
             this.tsbAddSystems.Image = global::EDDiscovery.Icons.Controls.Exploration_ImportSphere;
+            this.tsbAddSystems.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.tsbAddSystems.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbAddSystems.Name = "tsbAddSystems";
-            this.tsbAddSystems.Size = new System.Drawing.Size(95, 22);
+            this.tsbAddSystems.Size = new System.Drawing.Size(103, 29);
             this.tsbAddSystems.Text = "Add Systems";
             this.tsbAddSystems.Click += new System.EventHandler(this.tsbAddSystems_Click);
             // 
             // toolStripButtonImportFile
             // 
             this.toolStripButtonImportFile.Image = global::EDDiscovery.Icons.Controls.Exploration_ImportFile;
+            this.toolStripButtonImportFile.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonImportFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonImportFile.Name = "toolStripButtonImportFile";
-            this.toolStripButtonImportFile.Size = new System.Drawing.Size(108, 22);
+            this.toolStripButtonImportFile.Size = new System.Drawing.Size(116, 29);
             this.toolStripButtonImportFile.Text = "Import Text File";
             this.toolStripButtonImportFile.Click += new System.EventHandler(this.toolStripButtonImportFile_Click);
             // 
             // toolStripButtonExport
             // 
             this.toolStripButtonExport.Image = global::EDDiscovery.Icons.Controls.Exploration_Export;
+            this.toolStripButtonExport.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonExport.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonExport.Name = "toolStripButtonExport";
-            this.toolStripButtonExport.Size = new System.Drawing.Size(105, 22);
+            this.toolStripButtonExport.Size = new System.Drawing.Size(113, 29);
             this.toolStripButtonExport.Text = "Export Text File";
             this.toolStripButtonExport.ToolTipText = "Export to file";
             this.toolStripButtonExport.Click += new System.EventHandler(this.toolStripButtonExport_Click);
@@ -160,16 +167,17 @@ namespace EDDiscovery.UserControls
             // toolStripButtonClear
             // 
             this.toolStripButtonClear.Image = global::EDDiscovery.Icons.Controls.Exploration_Delete;
+            this.toolStripButtonClear.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             this.toolStripButtonClear.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonClear.Name = "toolStripButtonClear";
-            this.toolStripButtonClear.Size = new System.Drawing.Size(75, 22);
+            this.toolStripButtonClear.Size = new System.Drawing.Size(83, 29);
             this.toolStripButtonClear.Text = "Clear List";
             this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 26);
             // 
             // panelRouteInfo
             // 
@@ -178,7 +186,7 @@ namespace EDDiscovery.UserControls
             this.panelRouteInfo.Controls.Add(this.textBoxRouteName);
             this.panelRouteInfo.Controls.Add(this.labelName);
             this.panelRouteInfo.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelRouteInfo.Location = new System.Drawing.Point(0, 25);
+            this.panelRouteInfo.Location = new System.Drawing.Point(0, 32);
             this.panelRouteInfo.Name = "panelRouteInfo";
             this.panelRouteInfo.Size = new System.Drawing.Size(817, 54);
             this.panelRouteInfo.TabIndex = 1;
@@ -321,7 +329,7 @@ namespace EDDiscovery.UserControls
             this.dataGridViewExplore.Location = new System.Drawing.Point(0, 0);
             this.dataGridViewExplore.Name = "dataGridViewExplore";
             this.dataGridViewExplore.ScrollBars = System.Windows.Forms.ScrollBars.None;
-            this.dataGridViewExplore.Size = new System.Drawing.Size(797, 494);
+            this.dataGridViewExplore.Size = new System.Drawing.Size(797, 487);
             this.dataGridViewExplore.TabIndex = 2;
             this.dataGridViewExplore.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewExplore_CellValidated);
             this.dataGridViewExplore.SortCompare += new System.Windows.Forms.DataGridViewSortCompareEventHandler(this.dataGridViewExplore_SortCompare);
@@ -409,10 +417,10 @@ namespace EDDiscovery.UserControls
             this.dataViewScrollerPanel1.Controls.Add(this.dataGridViewExplore);
             this.dataViewScrollerPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataViewScrollerPanel1.InternalMargin = new System.Windows.Forms.Padding(0);
-            this.dataViewScrollerPanel1.Location = new System.Drawing.Point(0, 79);
+            this.dataViewScrollerPanel1.Location = new System.Drawing.Point(0, 86);
             this.dataViewScrollerPanel1.Name = "dataViewScrollerPanel1";
             this.dataViewScrollerPanel1.ScrollBarWidth = 20;
-            this.dataViewScrollerPanel1.Size = new System.Drawing.Size(817, 494);
+            this.dataViewScrollerPanel1.Size = new System.Drawing.Size(817, 487);
             this.dataViewScrollerPanel1.TabIndex = 3;
             this.dataViewScrollerPanel1.VerticalScrollBarDockRight = true;
             // 
@@ -433,7 +441,7 @@ namespace EDDiscovery.UserControls
             this.vScrollBarCustom1.MouseOverButtonColor = System.Drawing.Color.Green;
             this.vScrollBarCustom1.MousePressedButtonColor = System.Drawing.Color.Red;
             this.vScrollBarCustom1.Name = "vScrollBarCustom1";
-            this.vScrollBarCustom1.Size = new System.Drawing.Size(20, 473);
+            this.vScrollBarCustom1.Size = new System.Drawing.Size(20, 466);
             this.vScrollBarCustom1.SliderColor = System.Drawing.Color.DarkGray;
             this.vScrollBarCustom1.SmallChange = 1;
             this.vScrollBarCustom1.TabIndex = 3;
@@ -462,7 +470,6 @@ namespace EDDiscovery.UserControls
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewExplore)).EndInit();
             this.dataViewScrollerPanel1.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -474,7 +481,7 @@ namespace EDDiscovery.UserControls
         private System.Windows.Forms.Panel panelRouteInfo;
         private System.Windows.Forms.Label labelName;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private ExtendedControls.TextBoxBorder textBoxRouteName;
+        private ExtendedControls.ExtTextBox textBoxRouteName;
         private System.Windows.Forms.ContextMenuStrip contextMenuCopyPaste;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
@@ -487,12 +494,12 @@ namespace EDDiscovery.UserControls
         private System.Windows.Forms.ToolStripMenuItem editBookmarkToolStripMenuItem;
         private System.Windows.Forms.DataGridView dataGridViewExplore;
         private System.Windows.Forms.ToolStripButton toolStripButtonLoad;
-        private ExtendedControls.TextBoxBorder textBoxFileName;
+        private ExtendedControls.ExtTextBox textBoxFileName;
         private System.Windows.Forms.Label labelFilename;
         private System.Windows.Forms.ToolStripButton tsbAddSystems;
-        private ExtendedControls.DataViewScrollerPanel dataViewScrollerPanel1;
-        private ExtendedControls.VScrollBarCustom vScrollBarCustom1;
-        private ExtendedControls.AutoCompleteDGVColumn ColumnSystemName;
+        private ExtendedControls.ExtPanelDataGridViewScroll dataViewScrollerPanel1;
+        private ExtendedControls.ExtScrollBar vScrollBarCustom1;
+        private ExtendedControls.ExtDataGridViewColumnAutoComplete ColumnSystemName;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnDist;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnX;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColumnY;

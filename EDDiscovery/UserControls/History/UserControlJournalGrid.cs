@@ -33,11 +33,11 @@ namespace EDDiscovery.UserControls
 {
     public partial class UserControlJournalGrid : UserControlCommonBase, IHistoryCursor
     {
-        EventFilterSelector cfs = new EventFilterSelector();
+        FilterSelector cfs;
         private BaseUtils.ConditionLists fieldfilter = new BaseUtils.ConditionLists();
         private Dictionary<long, DataGridViewRow> rowsbyjournalid = new Dictionary<long, DataGridViewRow>();
 
-        private string DbFilterSave { get { return DBName("JournalGridControlEventFilter" ); } }
+        private string DbFilterSave { get { return DBName("JournalGridControlEventFilter2" ); } }
         private string DbColumnSave { get { return DBName("JournalGrid", "DGVCol"); } }
         private string DbHistorySave { get { return DBName("JournalEDUIHistory" ); } }
         private string DbFieldFilter { get { return DBName("JournalGridControlFieldFilter" ); } }
@@ -82,11 +82,15 @@ namespace EDDiscovery.UserControls
             dataGridViewJournal.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dataGridViewJournal.RowTemplate.Height = 26;
             dataGridViewJournal.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;     // NEW! appears to work https://msdn.microsoft.com/en-us/library/74b2wakt(v=vs.110).aspx
-            cfs.AddStandardExtraOptions();
-            cfs.Changed += EventFilterChanged;
+
+            cfs = new FilterSelector(DbFilterSave);
+            cfs.AddAllNone();
+            cfs.AddJournalExtraOptions();
+            cfs.AddJournalEntries();
+            cfs.Closing += EventFilterChanged;
             TravelHistoryFilter.InitaliseComboBox(comboBoxJournalWindow, DbHistorySave);
 
-            checkBoxMoveToTop.Checked = SQLiteConnectionUser.GetSettingBool(DbAutoTop, true);
+            checkBoxCursorToTop.Checked = SQLiteConnectionUser.GetSettingBool(DbAutoTop, true);
 
             string filter = SQLiteDBClass.GetSettingString(DbFieldFilter, "");
             if (filter.Length > 0)
@@ -119,7 +123,7 @@ namespace EDDiscovery.UserControls
             DGVSaveColumnLayout(dataGridViewJournal, DbColumnSave);
             discoveryform.OnHistoryChange -= Display;
             discoveryform.OnNewEntry -= AddNewEntry;
-            SQLiteConnectionUser.PutSettingBool(DbAutoTop, checkBoxMoveToTop.Checked);
+            SQLiteConnectionUser.PutSettingBool(DbAutoTop, checkBoxCursorToTop.Checked);
             searchtimer.Dispose();
         }
 
@@ -191,14 +195,14 @@ namespace EDDiscovery.UserControls
             {
                 todo.Enqueue(() =>
                 {
-                    dataGridViewJournal.SuspendLayout();
+                    dataViewScrollerPanel.Suspend();
                     foreach (var item in chunk)
                     {
                         var row = CreateHistoryRow(item, filtertext);
                         if (row != null)
                             dataGridViewJournal.Rows.Add(row);
                     }
-                    dataGridViewJournal.ResumeLayout();
+                    dataViewScrollerPanel.Resume();
                 });
             }
 
@@ -304,7 +308,7 @@ namespace EDDiscovery.UserControls
                     }
                 }
 
-                if (checkBoxMoveToTop.Checked && dataGridViewJournal.DisplayedRowCount(false) > 0)   // Move focus to new row
+                if (checkBoxCursorToTop.Checked && dataGridViewJournal.DisplayedRowCount(false) > 0)   // Move focus to new row
                 {
                     dataGridViewJournal.ClearSelection();
                     int rowno = dataGridViewJournal.Rows.GetFirstRow(DataGridViewElementStates.Visible);
@@ -357,13 +361,13 @@ namespace EDDiscovery.UserControls
         private void buttonFilter_Click(object sender, EventArgs e)
         {
             Button b = sender as Button;
-            cfs.FilterButton(DbFilterSave, b,
-                             discoveryform.theme.TextBackColor, discoveryform.theme.TextBlockColor, discoveryform.theme.GetFontStandardFontSize(), this.FindForm());
+            cfs.Filter(b, this.FindForm());
         }
 
-        private void EventFilterChanged(object sender, EventArgs e)
+        private void EventFilterChanged(object sender, bool same, Object e)
         {
-            Display(current_historylist);
+            if (!same)
+                Display(current_historylist);
         }
 
         private void textBoxFilter_TextChanged(object sender, EventArgs e)
@@ -393,7 +397,7 @@ namespace EDDiscovery.UserControls
             namelist.AddRange(discoveryform.Globals.NameList);
             frm.InitFilter("Journal: Filter out fields",
                             Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                            JournalEntry.GetListOfEventsWithOptMethod(false) ,
+                            JournalEntry.GetNameOfEvents() ,
                             (s) => { return BaseUtils.TypeHelpers.GetPropertyFieldNames(JournalEntry.TypeOfJournalEntry(s)); },
                             namelist, fieldfilter);
             if (frm.ShowDialog(this.FindForm()) == DialogResult.OK)

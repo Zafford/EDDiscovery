@@ -45,8 +45,8 @@ namespace EDDiscovery.UserControls
         {
             this.components = new System.ComponentModel.Container();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.panelVScroll = new ExtendedControls.PanelVScroll();
-            this.vScrollBarCustom = new ExtendedControls.VScrollBarCustom();
+            this.panelVScroll = new ExtendedControls.ExtPanelScroll();
+            this.vScrollBarCustom = new ExtendedControls.ExtScrollBar();
             this.panelVScroll.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -58,7 +58,6 @@ namespace EDDiscovery.UserControls
             // 
             this.panelVScroll.Controls.Add(this.vScrollBarCustom);
             this.panelVScroll.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelVScroll.InternalMargin = new System.Windows.Forms.Padding(0);
             this.panelVScroll.Location = new System.Drawing.Point(0, 0);
             this.panelVScroll.Name = "panelVScroll";
             this.panelVScroll.ScrollBarWidth = 20;
@@ -109,7 +108,7 @@ namespace EDDiscovery.UserControls
         #endregion
 
         private System.Windows.Forms.ToolTip toolTip;
-        private ExtendedControls.PanelVScroll panelVScroll;
-        private ExtendedControls.VScrollBarCustom vScrollBarCustom;
+        private ExtendedControls.ExtPanelScroll panelVScroll;
+        private ExtendedControls.ExtScrollBar vScrollBarCustom;
     }
 }

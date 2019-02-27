@@ -61,9 +61,9 @@
   <ItemGroup>
     <None Include="Controls\Fakes\Controls.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Controls.Designer.cs</LastGenOutput>
       <CustomToolNamespace>EDDiscovery.Icons</CustomToolNamespace>
       <SubType>Designer</SubType>
+      <LastGenOutput>Controls.Designer.cs</LastGenOutput>
     </None>
     <EmbeddedResource Include="Journal\AfmuRepairs.png" />
     <EmbeddedResource Include="Journal\ApproachSettlement.png" />
@@ -214,16 +214,8 @@
     <EmbeddedResource Include="Journal\WingLeave.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Legacy\eddiscovery_logo.png" />
-    <EmbeddedResource Include="Legacy\edsmown.png" />
-    <EmbeddedResource Include="Legacy\G8V_and_G9V.png" />
-    <EmbeddedResource Include="Legacy\Globe_yellow.png" />
-    <EmbeddedResource Include="Legacy\M1VA.png" />
-    <EmbeddedResource Include="Legacy\module.png" />
     <EmbeddedResource Include="Legacy\speaker.png" />
     <EmbeddedResource Include="Legacy\star.png" />
-    <EmbeddedResource Include="Legacy\textreceived.png" />
-    <EmbeddedResource Include="Legacy\textsent.png" />
     <EmbeddedResource Include="Planets\Ammonia_world.png" />
     <EmbeddedResource Include="Planets\Earthlike_body.png" />
     <EmbeddedResource Include="Planets\Gas_giant_with_ammonia_based_life.png" />
@@ -430,7 +422,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Controls\DateTimePicker\Calendar.png" />
     <EmbeddedResource Include="Controls\Expedition\ShowOnMap.png" />
     <EmbeddedResource Include="Controls\Expedition\New.png" />
     <EmbeddedResource Include="Controls\Expedition\ImportFile.png" />
@@ -446,8 +437,6 @@
     <EmbeddedResource Include="Controls\Exploration\New.png" />
     <EmbeddedResource Include="Controls\Exploration\Save.png" />
     <EmbeddedResource Include="Controls\JournalGrid\ExportToExcel.png" />
-    <EmbeddedResource Include="Controls\JournalGrid\Journal.png" />
-    <EmbeddedResource Include="Controls\JournalGrid\Popout.png" />
     <EmbeddedResource Include="Controls\Main\Addons\EditLastActionPack.png" />
     <EmbeddedResource Include="Controls\Main\Addons\ManageAddOns.png" />
     <EmbeddedResource Include="Controls\Main\Addons\StopCurrentAction.png" />
@@ -501,19 +490,12 @@
     <EmbeddedResource Include="Controls\Scan\SizeTiny.png" />
     <EmbeddedResource Include="Controls\StarList\EDSM.png" />
     <EmbeddedResource Include="Controls\StarList\ExportToExcel.png" />
-    <EmbeddedResource Include="Controls\StarList\History.png" />
     <EmbeddedResource Include="Controls\StatsTime\Graph.png" />
     <EmbeddedResource Include="Controls\StatsTime\Planets.png" />
     <EmbeddedResource Include="Controls\StatsTime\Stars.png" />
     <EmbeddedResource Include="Controls\StatsTime\Text.png" />
-    <EmbeddedResource Include="Controls\TabStrip\ArrowLeft.png" />
-    <EmbeddedResource Include="Controls\TabStrip\ArrowRight.png" />
-    <EmbeddedResource Include="Controls\TabStrip\PanelList.png" />
     <EmbeddedResource Include="Controls\TabStrip\Popout.png" />
-    <EmbeddedResource Include="Controls\TabStrip\NoPanelSelected.png" />
     <EmbeddedResource Include="Controls\TravelGrid\ExportToExcel.png" />
-    <EmbeddedResource Include="Controls\TravelGrid\History.png" />
-    <EmbeddedResource Include="Controls\TravelGrid\Popout.png" />
     <EmbeddedResource Include="Controls\Trilateration\RemoveAll.png" />
     <EmbeddedResource Include="Controls\Trilateration\RemoveUnused.png" />
     <EmbeddedResource Include="Controls\Trilateration\ShowOnMap.png" />
@@ -544,9 +526,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Panels\ScanGrid.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Controls\EDSM\ExportToExcel.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Controls\Modules\ShowOnCoriolis.png" />
@@ -659,9 +638,6 @@
     <EmbeddedResource Include="Controls\Modules\Configure.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Controls\Plot\Dots.png" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Panels\OutfittingPanel.png" />
     <EmbeddedResource Include="Panels\ShipYardPanel.png" />
   </ItemGroup>
@@ -678,10 +654,26 @@
     <EmbeddedResource Include="Controls\SysInfo\notfirstdiscover.png" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Controls\Scan\Star.png" />
+    <EmbeddedResource Include="Controls\TravelGrid\EventFilter.png" />
+    <EmbeddedResource Include="Controls\TravelGrid\FieldFilter.png" />
+    <EmbeddedResource Include="Controls\TravelGrid\Outlines.png" />
+    <EmbeddedResource Include="Controls\TravelGrid\CursorToTop.png" />
+    <EmbeddedResource Include="Panels\Surveyor.png" />
+    <EmbeddedResource Include="Panels\CaptainsLog.png" />
+    <EmbeddedResource Include="Controls\Scan\SizeTinyTiny.png" />
+    <EmbeddedResource Include="Controls\Scan\SizeMinuscule.png" />
     <EmbeddedResource Include="Journal\SquadronStartup.png" />
     <EmbeddedResource Include="Journal\ReservoirReplenished.png" />
     <EmbeddedResource Include="Journal\ProspectedAsteroid.png" />
     <EmbeddedResource Include="Controls\Bookmarks\ImportExcel.png" />
+    <EmbeddedResource Include="Controls\CaptainsLog\Delete.png" />
+    <EmbeddedResource Include="Controls\CaptainsLog\New.png" />
+    <EmbeddedResource Include="Controls\CaptainsLog\Tags.png" />
+    <EmbeddedResource Include="Controls\CaptainsLog\Diary.png" />
+    <EmbeddedResource Include="Controls\CaptainsLog\Entries.png" />
+    <EmbeddedResource Include="Controls\General\All.png" />
+    <EmbeddedResource Include="Controls\General\None.png" />
     <Content Include="Controls\readme.txt" />
     <EmbeddedResource Include="Panels\MissionOverlay.png" />
     <EmbeddedResource Include="Journal\CrimeVictim.png" />
@@ -691,7 +683,6 @@
     <EmbeddedResource Include="Panels\Search.png" />
     <EmbeddedResource Include="Controls\Search\SearchStars.png" />
     <EmbeddedResource Include="Controls\ScanGrid\Belt.png" />
-    <EmbeddedResource Include="Controls\ScanGrid\Ring.png" />
     <EmbeddedResource Include="Panels\GroupMarker.png" />
     <EmbeddedResource Include="Journal\CodexEntry.png" />
     <EmbeddedResource Include="Journal\SAAScanComplete.png" />

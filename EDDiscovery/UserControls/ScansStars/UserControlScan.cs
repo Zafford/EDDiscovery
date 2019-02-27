@@ -61,15 +61,17 @@ namespace EDDiscovery.UserControls
             panelStars.CheckEDSM = checkBoxEDSM.Checked = SQLiteDBClass.GetSettingBool(DbSave + "EDSM", false);
             panelStars.HideFullMaterials = checkBoxCustomHideFullMats.Checked = SQLiteDBClass.GetSettingBool(DbSave + "MaterialsFull", false);
             panelStars.ShowOverlays = chkShowOverlays.Checked = SQLiteDBClass.GetSettingBool(DbSave + "BodyOverlays", false);
+            panelStars.ValueLimit = SQLiteDBClass.GetSettingInt(DbSave + "ValueLimit", 50000);
             progchange = false;
 
+            rollUpPanelTop.PinState = SQLiteConnectionUser.GetSettingBool(DbSave + "PinState", true);
+
             int size = SQLiteDBClass.GetSettingInt(DbSave + "Size", 64);
-            SetSizeCheckBoxes(size);
+            SetSizeImage(size);
 
             discoveryform.OnNewEntry += NewEntry;
 
             BaseUtils.Translator.Instance.Translate(this);
-            BaseUtils.Translator.Instance.Translate(contextMenuStrip, this);
             BaseUtils.Translator.Instance.Translate(toolTip, this);
         }
 
@@ -87,6 +89,7 @@ namespace EDDiscovery.UserControls
 
         public override void Closing()
         {
+            SQLiteConnectionUser.PutSettingBool(DbSave + "PinState", rollUpPanelTop.PinState );
             uctg.OnTravelSelectionChanged -= Display;
             discoveryform.OnNewEntry -= NewEntry;
             closing = true;
@@ -167,8 +170,6 @@ namespace EDDiscovery.UserControls
         {
             panelStars.HideInfo();
 
-            lblSystemInfo.Text = "";
-
             StarScan.SystemNode data = panelStars.DrawSystem(showing_system, showing_matcomds, discoveryform.history);
 
             if (showing_system == null)
@@ -177,40 +178,71 @@ namespace EDDiscovery.UserControls
             }
             else
             {
-                SetControlText(data == null ? "No Scan".Tx() : data.system.Name);
                 if (data != null)
-                    BuildSystemInfo(data);
-            }
-
-        }
-
-        private void BuildSystemInfo(StarScan.SystemNode system)
-        {
-            //systems are small... if they get too big and iterating repeatedly is a problem we'll have to move to a node-by-node approach, and move away from a single-line label
-            lblSystemInfo.Text = BuildScanValue(system);
-        }
-
-        private string BuildScanValue(StarScan.SystemNode system)
-        {
-            var value = 0;
-
-            foreach (var body in system.Bodies)
-            {
-                if (body?.ScanData != null)
                 {
-                    if (checkBoxEDSM.Checked || !body.ScanData.IsEDSMBody)
-                    {
-                        value += body.ScanData.EstimateScanValue(body.IsMapped, body.WasMappedEfficiently);
-                    }
+                    long value = data.ScanValue(checkBoxEDSM.Checked);
+                    SetControlText(data.system.Name + " (~" + value.ToString() + " cr)");
                 }
+                else
+                    SetControlText(data == null ? "No Scan".Tx() : data.system.Name);
             }
-
-            return string.Format("Approx value: {0:N0}".Tx(this,"AV"), value);
         }
 
         #endregion
 
         #region User interaction
+
+        private void extCheckBoxStar_Click(object sender, EventArgs e)
+        {
+            if ( extCheckBoxStar.Checked == true )
+            {
+                ExtendedControls.ConfigurableForm f = new ExtendedControls.ConfigurableForm();
+                int width = 700;
+                f.Add(new ExtendedControls.ConfigurableForm.Entry("L", typeof(Label), "System:".Tx(this), new Point(10, 40), new Size(160, 24), null));
+                f.Add(new ExtendedControls.ConfigurableForm.Entry("Sys", typeof(ExtendedControls.ExtTextBoxAutoComplete), "", new Point(180, 40), new Size(width - 180 - 20, 24), null));
+
+                f.Add(new ExtendedControls.ConfigurableForm.Entry("OK", typeof(ExtendedControls.ExtButton), "OK".Tx(), new Point(width - 20 - 80, 80), new Size(80, 24), ""));
+                f.Add(new ExtendedControls.ConfigurableForm.Entry("Cancel", typeof(ExtendedControls.ExtButton), "Cancel".Tx(), new Point(width - 200, 80), new Size(80, 24), ""));
+
+                f.Trigger += (dialogname, controlname, tag) =>
+                {
+                    if (controlname == "OK" || controlname == "Cancel")
+                    {
+                        f.DialogResult = controlname == "OK" ? DialogResult.OK : DialogResult.Cancel;
+                        f.Close();
+                    }
+                };
+
+                f.Init(this.FindForm().Icon, new Size(width, 120), new Point(-999, -999), "Show System".Tx(this, "EnterSys"), null, null);
+                f.GetControl<ExtendedControls.ExtTextBoxAutoComplete>("Sys").SetAutoCompletor(SystemClassDB.ReturnOnlySystemsListForAutoComplete);
+                DialogResult res = f.ShowDialog(this.FindForm());
+
+                if (res == DialogResult.OK)
+                {
+                    string sname = f.Get("Sys");
+                    if (sname.HasChars())
+                    {
+                        showing_matcomds = null;
+                        showing_system = new EliteDangerousCore.SystemClass(sname);
+                        override_system = true;
+                        DrawSystem();
+                        extCheckBoxStar.Checked = true;
+                    }
+                    else
+                        extCheckBoxStar.Checked = false;
+                }
+                else
+                    extCheckBoxStar.Checked = false;
+            }
+            else
+            {
+                override_system = false;
+                DrawSystem(last_he);
+                extCheckBoxStar.Checked = false;
+            }
+
+        }
+
 
         bool progchange = false;
 
@@ -261,51 +293,6 @@ namespace EDDiscovery.UserControls
             }
         }
 
-        private void SetSizeCheckBoxes(int size)
-        {
-            progchange = true;
-            checkBoxLarge.Checked = (size == 128);
-            checkBoxMedium.Checked = (size == 96);
-            checkBoxSmall.Checked = (size == 64);
-            checkBoxTiny.Checked = (size == 48);
-
-            if (!checkBoxLarge.Checked && !checkBoxMedium.Checked && !checkBoxSmall.Checked && !checkBoxTiny.Checked)
-            {
-                checkBoxSmall.Checked = true;
-                size = 64;
-            }
-
-            panelStars.SetSize(size);
-            SQLiteDBClass.PutSettingInt(DbSave + "Size", size);
-            progchange = false;
-
-            DrawSystem();
-        }
-
-        private void checkBoxLarge_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!progchange)
-                SetSizeCheckBoxes(128);
-        }
-
-        private void checkBoxMedium_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!progchange)
-                SetSizeCheckBoxes(96);
-        }
-
-        private void checkBoxSmall_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!progchange)
-                SetSizeCheckBoxes(64);
-        }
-
-        private void checkBoxTiny_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!progchange)
-                SetSizeCheckBoxes(48);
-        }
-
         private void checkBoxEDSM_CheckedChanged(object sender, EventArgs e)
         {
             if (!progchange)
@@ -326,52 +313,101 @@ namespace EDDiscovery.UserControls
             }
         }
 
-        private void toolStripMenuItemToolbar_Click(object sender, EventArgs e)
+        private void extButtonHighValue_Click(object sender, EventArgs e)
         {
-            panelControls.Visible = !panelControls.Visible;
-            lblSystemInfo.Left = panelControls.Visible ? panelControls.Width : 0; // move approx value to left if controls hidden
-        }
+            ExtendedControls.ConfigurableForm cf = new ConfigurableForm();
+            int width = 300;
+            int height = 100;
 
-        private void showSystemToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ExtendedControls.ConfigurableForm f = new ExtendedControls.ConfigurableForm();
-            int width = 700;
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("L", typeof(Label), "System:".Tx(this), new Point(10, 40), new Size(160, 24), null));
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("Sys", typeof(ExtendedControls.AutoCompleteTextBox), "", new Point(180, 40), new Size(width-180-20, 24), null));
+            cf.Add(new ExtendedControls.ConfigurableForm.Entry("UC", typeof(ExtendedControls.NumberBoxLong), panelStars.ValueLimit.ToStringInvariant(),
+                                        new Point(5, 30), new Size(width - 5 - 20, 24), null)
+            { numberboxlongminimum = 1, numberboxlongmaximum = 2000000000 });
 
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("OK", typeof(ExtendedControls.ButtonExt), "OK".Tx(), new Point(width - 20 - 80, 80), new Size(80, 24),""));
-            f.Add(new ExtendedControls.ConfigurableForm.Entry("Cancel", typeof(ExtendedControls.ButtonExt), "Cancel".Tx(), new Point(width - 200, 80), new Size(80, 24), ""));
+            cf.Add(new ExtendedControls.ConfigurableForm.Entry("OK", typeof(ExtendedControls.ExtButton), "OK".Tx(),
+                        new Point(width - 20 - 80, height - 40), new Size(80, 24), ""));
 
-            f.Trigger += (dialogname, controlname, tag) =>
+            cf.Trigger += (dialogname, controlname, tag) =>
             {
-                if (controlname == "OK" || controlname == "Cancel")
+                System.Diagnostics.Debug.WriteLine("control" + controlname);
+
+                if (controlname.Contains("Validity:False"))
+                    cf.SetEnabled("OK", false);
+                else if (controlname.Contains("Validity:True"))
+                    cf.SetEnabled("OK", true);
+                else if (controlname == "OK")
                 {
-                    f.DialogResult = controlname == "OK" ? DialogResult.OK : DialogResult.Cancel;
-                    f.Close();
+                    cf.DialogResult = DialogResult.OK;
+                    cf.Close();
                 }
             };
 
-            f.Init(this.FindForm().Icon, new Size(width, 120), new Point(-999, -999), "Show System".Tx(this, "EnterSys"),null,null);
-            f.GetControl<ExtendedControls.AutoCompleteTextBox>("Sys").SetAutoCompletor(SystemClassDB.ReturnOnlySystemsListForAutoComplete);
-            DialogResult res = f.ShowDialog(this.FindForm());
-
-            if ( res == DialogResult.OK )
+            if (cf.ShowDialog(this.FindForm(), this.FindForm().Icon, new Size(width, height), new Point(-999, -999), "Set Valuable Minimum".Tx(this, "VLMT")) == DialogResult.OK)
             {
-                string sname = f.Get("Sys");
-                if (sname.HasChars())
-                {
-                    showing_matcomds = null;
-                    showing_system = new EliteDangerousCore.SystemClass(sname);
-                    override_system = true;
-                    DrawSystem();
-                }
+                long? value = cf.GetLong("UC");
+                panelStars.ValueLimit = (int)value.Value;
+                SQLiteDBClass.PutSettingInt(DbSave + "ValueLimit", panelStars.ValueLimit);
+                DrawSystem();
             }
         }
 
-        private void cancelShowSystemToolStripMenuItem_Click(object sender, EventArgs e)
+        ExtListBoxForm dropdown;
+
+        private void buttonSize_Click(object sender, EventArgs e)
         {
-            override_system = false;
-            DrawSystem(last_he);
+            // 128,96,64,48
+            dropdown = new ExtListBoxForm("", true);
+
+            Image[] imagelist = new Image[] { global::EDDiscovery.Icons.Controls.Scan_SizeLarge ,
+                global::EDDiscovery.Icons.Controls.Scan_SizeMedium ,
+                global::EDDiscovery.Icons.Controls.Scan_SizeSmall ,
+                global::EDDiscovery.Icons.Controls.Scan_SizeTiny ,
+                global::EDDiscovery.Icons.Controls.Scan_SizeTinyTiny ,
+                global::EDDiscovery.Icons.Controls.Scan_SizeMinuscule ,
+            };
+
+            string[] textlist = new string[] { "128", "96", "64", "48", "32", "16" };
+
+            dropdown.ItemHeight = imagelist[0].Size.Height + 2;
+            dropdown.Items = textlist.ToList();
+            dropdown.ImageItems = imagelist.ToList();
+            dropdown.FlatStyle = FlatStyle.Popup;
+            dropdown.Activated += (s, ea) =>
+            {
+                Point location = buttonSize.PointToScreen(new Point(0, 0));
+                dropdown.Location = dropdown.PositionWithinScreen(location.X, location.Y);
+                this.Invalidate(true);
+            };
+            dropdown.SelectedIndexChanged += (s, ea) =>
+            {
+                int size = textlist[dropdown.SelectedIndex].InvariantParseInt(64);
+                SetSizeImage(size);
+                DrawSystem();
+            };
+
+            dropdown.Size = new Size(64, dropdown.ItemHeight * textlist.Length + 8);
+
+            EDDTheme.Instance.ApplyToControls(dropdown);
+
+            dropdown.Show(this.FindForm());
+        }
+
+        private void SetSizeImage(int size)
+        {
+            if (size == 128)
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeLarge;
+            else if (size == 96)
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeMedium;
+            else if (size == 64)
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeSmall;
+            else if (size == 48)
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeTiny;
+            else if (size == 32)
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeTinyTiny;
+            else
+                buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeMinuscule;
+
+            panelStars.SetSize(size);
+            SQLiteDBClass.PutSettingInt(DbSave + "Size", size);
         }
 
         #endregion
@@ -591,18 +627,7 @@ namespace EDDiscovery.UserControls
 
                                 writer.Write(csv.Format(scan.EventTimeUTC));
                                 writer.Write(csv.Format(scan.BodyName));
-                                if (string.IsNullOrEmpty(scan.PlanetClass))
-                                {
-                                    writer.Write(csv.Format(scan.EstimateScanValue(false, false)));
-                                }
-                                else
-                                {
-                                    var map = mappings.FirstOrDefault(m => m.BodyName == scan.BodyName);
-                                    if (map == null)
-                                        writer.Write(csv.Format(scan.EstimateScanValue(false, false)));
-                                    else
-                                        writer.Write(csv.Format(scan.EstimateScanValue(true, map.ProbesUsed <= map.EfficiencyTarget)));
-                                }
+                                writer.Write(csv.Format(scan.EstimatedValue));
                                 writer.Write(csv.Format(scan.DistanceFromArrivalLS));
 
                                 if (ShowStars)
@@ -700,6 +725,7 @@ namespace EDDiscovery.UserControls
         }
 
         #endregion
+
     }
 }
 

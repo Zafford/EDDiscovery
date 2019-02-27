@@ -45,14 +45,14 @@ namespace EDDiscovery.UserControls
         {
             this.components = new System.ComponentModel.Container();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.labelTargetLat = new ExtendedControls.LabelExt();
-            this.labelExtTargetLong = new ExtendedControls.LabelExt();
-            this.checkBoxHideTransparent = new ExtendedControls.CheckBoxCustom();
+            this.labelTargetLat = new ExtendedControls.ExtLabel();
+            this.labelExtTargetLong = new ExtendedControls.ExtLabel();
+            this.checkBoxHideTransparent = new ExtendedControls.ExtCheckBox();
             this.numberBoxTargetLatitude = new ExtendedControls.NumberBoxDouble();
             this.numberBoxTargetLongitude = new ExtendedControls.NumberBoxDouble();
-            this.comboBoxBookmarks = new ExtendedControls.ComboBoxCustom();
-            this.labelBookmark = new ExtendedControls.LabelExt();
-            this.buttonNewBookmark = new ExtendedControls.ButtonExt();
+            this.comboBoxBookmarks = new ExtendedControls.ExtComboBox();
+            this.labelBookmark = new ExtendedControls.ExtLabel();
+            this.buttonNewBookmark = new ExtendedControls.ExtButton();
             this.compassControl = new ExtendedControls.CompassControl();
             this.SuspendLayout();
             // 
@@ -165,8 +165,8 @@ namespace EDDiscovery.UserControls
             this.comboBoxBookmarks.DisableBackgroundDisabledShadingGradient = false;
             this.comboBoxBookmarks.DisplayMember = "";
             this.comboBoxBookmarks.DropDownBackgroundColor = System.Drawing.Color.Gray;
-            this.comboBoxBookmarks.DropDownHeight = 200;
-            this.comboBoxBookmarks.DropDownWidth = 200;
+            this.comboBoxBookmarks.DropDownHeight = 400;
+            this.comboBoxBookmarks.DropDownWidth = 400;
             this.comboBoxBookmarks.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.comboBoxBookmarks.ItemHeight = 13;
             this.comboBoxBookmarks.Location = new System.Drawing.Point(116, 34);
@@ -178,7 +178,7 @@ namespace EDDiscovery.UserControls
             this.comboBoxBookmarks.SelectedIndex = -1;
             this.comboBoxBookmarks.SelectedItem = null;
             this.comboBoxBookmarks.SelectedValue = null;
-            this.comboBoxBookmarks.Size = new System.Drawing.Size(200, 21);
+            this.comboBoxBookmarks.Size = new System.Drawing.Size(247, 21);
             this.comboBoxBookmarks.TabIndex = 11;
             this.comboBoxBookmarks.Text = "comboBoxCustom1";
             this.comboBoxBookmarks.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -221,10 +221,11 @@ namespace EDDiscovery.UserControls
             this.compassControl.DisableMessage = "";
             this.compassControl.Distance = double.NaN;
             this.compassControl.DistanceFormat = "{0:0.##}";
+            this.compassControl.GlideSlope = double.NaN;
             this.compassControl.Location = new System.Drawing.Point(11, 66);
             this.compassControl.Name = "compassControl";
             this.compassControl.ShowNegativeDegrees = false;
-            this.compassControl.Size = new System.Drawing.Size(340, 80);
+            this.compassControl.Size = new System.Drawing.Size(469, 80);
             this.compassControl.SlewRateDegreesSec = 10;
             this.compassControl.SlewToBearing = 0D;
             this.compassControl.StencilColor = System.Drawing.Color.Red;
@@ -248,7 +249,7 @@ namespace EDDiscovery.UserControls
             this.Controls.Add(this.labelExtTargetLong);
             this.Controls.Add(this.labelTargetLat);
             this.Name = "UserControlCompass";
-            this.Size = new System.Drawing.Size(361, 157);
+            this.Size = new System.Drawing.Size(490, 157);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -256,14 +257,14 @@ namespace EDDiscovery.UserControls
 
         #endregion
         private System.Windows.Forms.ToolTip toolTip;
-        private ExtendedControls.LabelExt labelTargetLat;
-        private ExtendedControls.LabelExt labelExtTargetLong;
-        private ExtendedControls.CheckBoxCustom checkBoxHideTransparent;
+        private ExtendedControls.ExtLabel labelTargetLat;
+        private ExtendedControls.ExtLabel labelExtTargetLong;
+        private ExtendedControls.ExtCheckBox checkBoxHideTransparent;
         private ExtendedControls.NumberBoxDouble numberBoxTargetLatitude;
         private ExtendedControls.NumberBoxDouble numberBoxTargetLongitude;
-        private ExtendedControls.ComboBoxCustom comboBoxBookmarks;
-        private ExtendedControls.LabelExt labelBookmark;
-        private ExtendedControls.ButtonExt buttonNewBookmark;
+        private ExtendedControls.ExtComboBox comboBoxBookmarks;
+        private ExtendedControls.ExtLabel labelBookmark;
+        private ExtendedControls.ExtButton buttonNewBookmark;
         private ExtendedControls.CompassControl compassControl;
     }
 }

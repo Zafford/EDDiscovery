@@ -35,10 +35,10 @@ namespace EDDiscovery.UserControls
     public partial class UserControlSpanel : UserControlCommonBase
     {
         private string DbSave { get { return DBName("SPanel" ); } }
-        private string DbFilterSave { get { return DBName("SPanelEventFilter" ); } }
+        private string DbFilterSave { get { return DBName("SPanelEventFilter2" ); } }
         private string DbFieldFilter { get { return DBName("SPanelFieldFilter" ); } }
 
-        EventFilterSelector cfs = new EventFilterSelector();
+        FilterSelector cfs;
         private ConditionLists fieldfilter = new ConditionLists();
 
         private Timer scanhide = new Timer();
@@ -52,7 +52,7 @@ namespace EDDiscovery.UserControls
         HistoryList current_historylist;
 
         private Timer dividercheck = new Timer();
-        private ButtonExt[] dividers;
+        private ExtButton[] dividers;
         private int dividercapture = -2;        //-2 not shown, -1 shown, >=0 captured
         private int divideroriginalxpos = -1;
 
@@ -177,10 +177,13 @@ namespace EDDiscovery.UserControls
             if (filter.Length > 0)
                 fieldfilter.FromJSON(filter);        // load filter
 
-            cfs.AddStandardExtraOptions();
-            cfs.Changed += EventFilterChanged;
+            cfs = new FilterSelector(DbFilterSave);
+            cfs.AddAllNone();
+            cfs.AddJournalExtraOptions();
+            cfs.AddJournalEntries();
+            cfs.Closing += EventFilterChanged;
 
-            dividers = new ButtonExt[] { buttonExt0, buttonExt1, buttonExt2, buttonExt3, buttonExt4, buttonExt5, buttonExt6, buttonExt7, buttonExt8, buttonExt9, buttonExt10, buttonExt11, buttonExt12 };
+            dividers = new ExtButton[] { buttonExt0, buttonExt1, buttonExt2, buttonExt3, buttonExt4, buttonExt5, buttonExt6, buttonExt7, buttonExt8, buttonExt9, buttonExt10, buttonExt11, buttonExt12 };
 
             discoveryform.OnHistoryChange += Display;
             discoveryform.OnNewEntry += NewEntry;
@@ -458,7 +461,7 @@ namespace EDDiscovery.UserControls
             if (Config(Configuration.showEDSMButton))
             {
                 Color backtext = (backcolour.IsFullyTransparent()) ? Color.Black : backcolour;
-                ExtendedControls.PictureBoxHotspot.ImageElement edsm = pictureBox.AddTextFixedSizeC(new Point(scanpostextoffset.X + columnpos[colnum++], rowpos), new Size(45, 14), 
+                ExtendedControls.ExtPictureBox.ImageElement edsm = pictureBox.AddTextFixedSizeC(new Point(scanpostextoffset.X + columnpos[colnum++], rowpos), new Size(45, 14), 
                                             "EDSM", displayfont, backtext, textcolour, 0.5F, true, he, "View system on EDSM".Tx(this,"TVE"));
                 edsm.Translate(0, (rowheight - edsm.img.Height) / 2);          // align to centre of rowh..
                 edsm.SetAlternateImage(BaseUtils.BitMapHelpers.DrawTextIntoFixedSizeBitmapC("EDSM", edsm.img.Size, displayfont, backtext, textcolour.Multiply(1.2F), 0.5F, true), edsm.pos, true);
@@ -474,8 +477,8 @@ namespace EDDiscovery.UserControls
 
                 if ( coldata[i].Equals("`!!ICON!!") )            // marker for ICON..
                 {
-                    Image img = he.GetIcon;
-                    ExtendedControls.PictureBoxHotspot.ImageElement e = pictureBox.AddImage(new Rectangle(scanpostextoffset.X + columnpos[colnum+i], rowpos, img.Width, img.Height), img, null, null, false);
+                    Image img = he.journalEntry.Icon;
+                    ExtendedControls.ExtPictureBox.ImageElement e = pictureBox.AddImage(new Rectangle(scanpostextoffset.X + columnpos[colnum+i], rowpos, img.Width, img.Height), img, null, null, false);
                     e.Translate(0, (rowheight - e.img.Height) / 2);          // align to centre of rowh..
                 }
                 else
@@ -493,19 +496,19 @@ namespace EDDiscovery.UserControls
                 {
                     if (Config(Configuration.showScanLeft))
                     {
-                        PictureBoxHotspot.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
+                        ExtPictureBox.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
                         scanpostextoffset = new Point(4 + scanimg.img.Width + 4, 0);
                         RequestTemporaryMinimumSize(new Size(scanimg.img.Width + 8, scanimg.img.Height + 4));
                     }
                     else if (Config(Configuration.showScanAbove))
                     {
-                        PictureBoxHotspot.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
+                        ExtPictureBox.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
                         scanpostextoffset = new Point(0, scanimg.img.Height + 4);
                         RequestTemporaryResizeExpand(new Size(0, scanimg.img.Height + 4));
                     }
                     else if (Config(Configuration.showScanOnTop))
                     {
-                        PictureBoxHotspot.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
+                        ExtPictureBox.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
 #if false
 
                         using (Graphics gr = Graphics.FromImage(scanimg.img))
@@ -526,13 +529,13 @@ namespace EDDiscovery.UserControls
                     if (Config(Configuration.showScanRight))
                     {
                         Size s = pictureBox.DisplaySize();
-                        PictureBoxHotspot.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(s.Width + 4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
+                        ExtPictureBox.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(s.Width + 4, 0), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
                         RequestTemporaryMinimumSize(new Size(s.Width+4+scanimg.img.Width + 8, scanimg.img.Height + 4));
                     }
                     else if (Config(Configuration.showScanBelow))
                     {
                         Size s = pictureBox.DisplaySize();
-                        PictureBoxHotspot.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, s.Height + 4), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
+                        ExtPictureBox.ImageElement scanimg = pictureBox.AddTextAutoSize(new Point(4, s.Height + 4), maxscansize, scantext, displayfont, textcolour, backcolour, 1.0F, "SCAN");
                         RequestTemporaryResizeExpand(new Size(0, scanimg.img.Height + 4));
                     }
                 }
@@ -555,7 +558,7 @@ namespace EDDiscovery.UserControls
                     colpos += 24;
                 }
 
-                ExtendedControls.PictureBoxHotspot.ImageElement e =
+                ExtendedControls.ExtPictureBox.ImageElement e =
                                 pictureBox.AddTextAutoSize(new Point(colpos, rowpos),
                                 new Size(endpos, rowh),
                                 text, displayfont, textcolour, backcolour, 1.0F, null, tooltip);
@@ -636,7 +639,7 @@ namespace EDDiscovery.UserControls
 
 #region Clicks
 
-        private void pictureBox_ClickElement(object sender, MouseEventArgs e, ExtendedControls.PictureBoxHotspot.ImageElement i, object tag)
+        private void pictureBox_ClickElement(object sender, MouseEventArgs e, ExtendedControls.ExtPictureBox.ImageElement i, object tag)
         {
             if (i != null)
             {
@@ -750,7 +753,7 @@ namespace EDDiscovery.UserControls
 
         private void ShowDividers(bool show)
         {
-            foreach (ButtonExt p in dividers)
+            foreach (ExtButton p in dividers)
                 p.Visible = false;
 
             //System.Diagnostics.Debug.WriteLine("Dividers " + show);
@@ -760,7 +763,7 @@ namespace EDDiscovery.UserControls
 
                 for (int i = 1; i < columnpos.Count; i++)              // bring up the number of dividers needed
                 {
-                    ButtonExt b = dividers[i - 1];
+                    ExtButton b = dividers[i - 1];
                     b.Location = new Point(scanpostextoffset.X + columnpos[i] - b.Width/2, 0);
                     b.ButtonColorScaling = 1.0F;
                     if (b.FlatStyle == FlatStyle.System)            // System can't do bitmaps.. we need standard.
@@ -1038,13 +1041,13 @@ namespace EDDiscovery.UserControls
         private void configureEventFilterToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Point p = MousePosition;
-            cfs.FilterButton(DbFilterSave, contextMenuStrip.PointToScreen(new Point(0, 0)), new Size(180,400), 
-                             discoveryform.theme.TextBackColor, discoveryform.theme.TextBlockColor, discoveryform.theme.GetFontStandardFontSize(), this.FindForm());
+            cfs.Filter(contextMenuStrip.PointToScreen(new Point(0, 0)), new Size(300,800), this.FindForm());
         }
 
-        private void EventFilterChanged(object sender, EventArgs e)
+        private void EventFilterChanged(object sender, bool same, Object e)
         {
-            Display(current_historylist);
+            if (!same)
+                Display(current_historylist);
         }
 
         private void configureFieldFilterToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1054,7 +1057,7 @@ namespace EDDiscovery.UserControls
             namelist.AddRange(discoveryform.Globals.NameList);
             frm.InitFilter("Summary Panel: Filter out fields".Tx(this,"SPF"),
                             Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                            JournalEntry.GetListOfEventsWithOptMethod(false) ,
+                            JournalEntry.GetNameOfEvents() ,
                             (s) => { return BaseUtils.TypeHelpers.GetPropertyFieldNames(JournalEntry.TypeOfJournalEntry(s)); },
                             namelist, fieldfilter);
             if (frm.ShowDialog(this.FindForm()) == DialogResult.OK)

@@ -70,15 +70,28 @@ namespace EDDiscovery.UserControls
             checkBoxShowUIEvents.Checked = EDDiscoveryForm.EDDConfig.ShowUIEvents;
             checkBoxCustomResize.Checked = EDDiscoveryForm.EDDConfig.DrawDuringResize;
 
+            checkBoxOrderRowsInverted.CheckedChanged += checkBoxOrderRowsInverted_CheckedChanged;
+            checkBoxMinimizeToNotifyIcon.CheckedChanged += checkBoxMinimizeToNotifyIcon_CheckedChanged;
+            checkBoxKeepOnTop.CheckedChanged += checkBoxKeepOnTop_CheckedChanged;
+            checkBoxPanelSortOrder.CheckedChanged += checkBoxPanelSortOrder_CheckedChanged;
+            checkBoxUseNotifyIcon.CheckedChanged += checkBoxUseNotifyIcon_CheckedChanged;
+            checkBoxUTC.CheckedChanged += checkBoxUTC_CheckedChanged;
+            checkBoxShowUIEvents.CheckedChanged += checkBoxShowUIEvents_CheckedChanged;
+            checkBoxCustomResize.CheckedChanged += checkBoxCustomResize_CheckedChanged;
+
             checkBoxMinimizeToNotifyIcon.Enabled = EDDiscoveryForm.EDDConfig.UseNotifyIcon;
 
             textBoxHomeSystem.Text = EDDConfig.Instance.HomeSystem.Name;
 
             textBoxDefaultZoom.ValueNoChange = EDDConfig.Instance.MapZoom;
 
+            textBoxDefaultZoom.ValueChanged += textBoxDefaultZoom_ValueChanged;
+
             bool selectionCentre = EDDConfig.Instance.MapCentreOnSelection;
             radioButtonHistorySelection.Checked = selectionCentre;
             radioButtonCentreHome.Checked = !selectionCentre;
+
+            radioButtonCentreHome.CheckedChanged += radioButtonCentreHome_CheckedChanged;
 
             dataGridViewCommanders.AutoGenerateColumns = false;             // BEFORE assigned to list..
             dataGridViewCommanders.DataSource = EDCommander.GetListCommanders();
@@ -106,7 +119,7 @@ namespace EDDiscovery.UserControls
             comboBoxCustomHistoryLoadTime.SelectedIndex = ix >= 0 ? ix : 0;
             comboBoxCustomHistoryLoadTime.SelectedIndexChanged += ComboBoxCustomHistoryLoadTime_SelectedIndexChanged;
 
-            var eetn = new string[] { nameof(JournalEntry.EssentialEvents), nameof(JournalEntry.FullStatsEssentialEvents) , nameof(JournalEntry.JumpScanEssentialEvents), nameof(JournalEntry.JumpEssentialEvents), nameof(JournalEntry.NoEssentialEvents)};
+            var eetn = new string[] { nameof(JournalEssentialEvents.EssentialEvents), nameof(JournalEssentialEvents.FullStatsEssentialEvents) , nameof(JournalEssentialEvents.JumpScanEssentialEvents), nameof(JournalEssentialEvents.JumpEssentialEvents), nameof(JournalEssentialEvents.NoEssentialEvents)};
             comboBoxCustomEssentialEntries.Items = new string[] { "Scans,Cargo,Missions,State,Jumps etc".Tx(this, "ESM"), "All entries for Statistics".Tx(this, "FS"), "Jumps and Scans".Tx(this, "EJS"), "Jumps".Tx(this, "EJ"), "Nothing".Tx(this, "EN") };
             comboBoxCustomEssentialEntries.Tag = eetn;
             ix = Array.FindIndex(eetn, x => x == EDDConfig.Instance.EssentialEventTypes);
@@ -422,7 +435,7 @@ namespace EDDiscovery.UserControls
 
         private void ComboBoxCustomLanguage_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ExtendedControls.ComboBoxCustom c = sender as ExtendedControls.ComboBoxCustom;
+            ExtendedControls.ExtComboBox c = sender as ExtendedControls.ExtComboBox;
             EDDConfig.Instance.Language = c.Items[c.SelectedIndex];
             ExtendedControls.MessageBoxTheme.Show(this, "Applies at next restart of ED Discovery".Tx(this, "Language"), "Information".Tx(), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -481,7 +494,7 @@ namespace EDDiscovery.UserControls
 
         private void comboBoxClickThruKey_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ExtendedControls.ComboBoxCustom c = sender as ExtendedControls.ComboBoxCustom;
+            ExtendedControls.ExtComboBox c = sender as ExtendedControls.ExtComboBox;
             Keys k = c.Text.ToVkey();
             EDDConfig.Instance.ClickThruKey = k;
         }

@@ -44,7 +44,7 @@ namespace EDDiscovery.UserControls
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.dataViewScrollerPanel = new ExtendedControls.DataViewScrollerPanel();
+            this.dataViewScrollerPanel = new ExtendedControls.ExtPanelDataGridViewScroll();
             this.labelNoItems = new System.Windows.Forms.Label();
             this.dataGridViewLedger = new System.Windows.Forms.DataGridView();
             this.TimeCol = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -56,13 +56,13 @@ namespace EDDiscovery.UserControls
             this.NormProfit = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItemGotoItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.vScrollBarCustomMC = new ExtendedControls.VScrollBarCustom();
+            this.vScrollBarCustomMC = new ExtendedControls.ExtScrollBar();
             this.panelButtons = new System.Windows.Forms.Panel();
             this.labelTime = new System.Windows.Forms.Label();
-            this.buttonFilter = new ExtendedControls.ButtonExt();
-            this.textBoxFilter = new ExtendedControls.TextBoxBorder();
+            this.buttonFilter = new ExtendedControls.ExtButton();
+            this.textBoxFilter = new ExtendedControls.ExtTextBox();
             this.labelSearch = new System.Windows.Forms.Label();
-            this.comboBoxHistoryWindow = new ExtendedControls.ComboBoxCustom();
+            this.comboBoxHistoryWindow = new ExtendedControls.ExtComboBox();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.dataViewScrollerPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewLedger)).BeginInit();
@@ -166,7 +166,7 @@ namespace EDDiscovery.UserControls
             this.NormProfit.MinimumWidth = 20;
             this.NormProfit.Name = "NormProfit";
             // 
-            // contextMenuStripLedger
+            // contextMenuStrip
             // 
             this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItemGotoItem});
@@ -191,13 +191,13 @@ namespace EDDiscovery.UserControls
             this.vScrollBarCustomMC.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.vScrollBarCustomMC.HideScrollBar = false;
             this.vScrollBarCustomMC.LargeChange = 0;
-            this.vScrollBarCustomMC.Location = new System.Drawing.Point(780, 21);
+            this.vScrollBarCustomMC.Location = new System.Drawing.Point(780, 0);
             this.vScrollBarCustomMC.Maximum = -1;
             this.vScrollBarCustomMC.Minimum = 0;
             this.vScrollBarCustomMC.MouseOverButtonColor = System.Drawing.Color.Green;
             this.vScrollBarCustomMC.MousePressedButtonColor = System.Drawing.Color.Red;
             this.vScrollBarCustomMC.Name = "vScrollBarCustomMC";
-            this.vScrollBarCustomMC.Size = new System.Drawing.Size(20, 519);
+            this.vScrollBarCustomMC.Size = new System.Drawing.Size(20, 540);
             this.vScrollBarCustomMC.SliderColor = System.Drawing.Color.DarkGray;
             this.vScrollBarCustomMC.SmallChange = 1;
             this.vScrollBarCustomMC.TabIndex = 0;
@@ -225,7 +225,7 @@ namespace EDDiscovery.UserControls
             // labelTime
             // 
             this.labelTime.AutoSize = true;
-            this.labelTime.Location = new System.Drawing.Point(64, 7);
+            this.labelTime.Location = new System.Drawing.Point(5, 7);
             this.labelTime.Name = "labelTime";
             this.labelTime.Size = new System.Drawing.Size(30, 13);
             this.labelTime.TabIndex = 26;
@@ -233,11 +233,11 @@ namespace EDDiscovery.UserControls
             // 
             // buttonFilter
             // 
-            this.buttonFilter.Location = new System.Drawing.Point(444, 4);
+            this.buttonFilter.Image = global::EDDiscovery.Icons.Controls.TravelGrid_EventFilter;
+            this.buttonFilter.Location = new System.Drawing.Point(380, 1);
             this.buttonFilter.Name = "buttonFilter";
-            this.buttonFilter.Size = new System.Drawing.Size(75, 23);
+            this.buttonFilter.Size = new System.Drawing.Size(28, 28);
             this.buttonFilter.TabIndex = 25;
-            this.buttonFilter.Text = "Event Filter";
             this.toolTip.SetToolTip(this.buttonFilter, "Display entries matching this event type filter");
             this.buttonFilter.UseVisualStyleBackColor = true;
             this.buttonFilter.Click += new System.EventHandler(this.buttonFilter_Click);
@@ -253,7 +253,7 @@ namespace EDDiscovery.UserControls
             this.textBoxFilter.ClearOnFirstChar = false;
             this.textBoxFilter.ControlBackground = System.Drawing.SystemColors.Control;
             this.textBoxFilter.InErrorCondition = false;
-            this.textBoxFilter.Location = new System.Drawing.Point(278, 6);
+            this.textBoxFilter.Location = new System.Drawing.Point(219, 6);
             this.textBoxFilter.Multiline = false;
             this.textBoxFilter.Name = "textBoxFilter";
             this.textBoxFilter.ReadOnly = false;
@@ -270,7 +270,7 @@ namespace EDDiscovery.UserControls
             // labelSearch
             // 
             this.labelSearch.AutoSize = true;
-            this.labelSearch.Location = new System.Drawing.Point(220, 7);
+            this.labelSearch.Location = new System.Drawing.Point(161, 7);
             this.labelSearch.Name = "labelSearch";
             this.labelSearch.Size = new System.Drawing.Size(41, 13);
             this.labelSearch.TabIndex = 24;
@@ -289,7 +289,7 @@ namespace EDDiscovery.UserControls
             this.comboBoxHistoryWindow.DropDownWidth = 1;
             this.comboBoxHistoryWindow.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.comboBoxHistoryWindow.ItemHeight = 13;
-            this.comboBoxHistoryWindow.Location = new System.Drawing.Point(110, 4);
+            this.comboBoxHistoryWindow.Location = new System.Drawing.Point(51, 4);
             this.comboBoxHistoryWindow.MouseOverBackgroundColor = System.Drawing.Color.Silver;
             this.comboBoxHistoryWindow.Name = "comboBoxHistoryWindow";
             this.comboBoxHistoryWindow.ScrollBarButtonColor = System.Drawing.Color.LightGray;
@@ -329,15 +329,15 @@ namespace EDDiscovery.UserControls
 
         #endregion
 
-        private ExtendedControls.DataViewScrollerPanel dataViewScrollerPanel;
+        private ExtendedControls.ExtPanelDataGridViewScroll dataViewScrollerPanel;
         private System.Windows.Forms.DataGridView dataGridViewLedger;
-        private ExtendedControls.VScrollBarCustom vScrollBarCustomMC;
+        private ExtendedControls.ExtScrollBar vScrollBarCustomMC;
         private System.Windows.Forms.Panel panelButtons;
         private System.Windows.Forms.Label labelNoItems;
-        private ExtendedControls.ButtonExt buttonFilter;
-        internal ExtendedControls.ComboBoxCustom comboBoxHistoryWindow;
+        private ExtendedControls.ExtButton buttonFilter;
+        internal ExtendedControls.ExtComboBox comboBoxHistoryWindow;
         private System.Windows.Forms.Label labelSearch;
-        private ExtendedControls.TextBoxBorder textBoxFilter;
+        private ExtendedControls.ExtTextBox textBoxFilter;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemGotoItem;
         private System.Windows.Forms.ToolTip toolTip;

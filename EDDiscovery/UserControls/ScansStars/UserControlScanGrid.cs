@@ -68,10 +68,10 @@ namespace EDDiscovery.UserControls
 
             // dataGridView setup - the rule is, use the designer for most properties.. only do these here since they are so buried or not available.
 
-            // this allows the row to grow to accomodate the text.. with a min height of 32.
+            // this allows the row to grow to accomodate the text.. with a min height of 48px.
             dataGridViewScangrid.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
             dataGridViewScangrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;     // NEW! appears to work https://msdn.microsoft.com/en-us/library/74b2wakt(v=vs.110).aspx
-            dataGridViewScangrid.RowTemplate.MinimumHeight = 32;
+            dataGridViewScangrid.RowTemplate.MinimumHeight = 48;
             this.dataGridViewScangrid.Columns[nameof(colImage)].DefaultCellStyle.SelectionBackColor = System.Drawing.Color.Black;
         }
 
@@ -278,8 +278,6 @@ namespace EDDiscovery.UserControls
 
                             var cur = dataGridViewScangrid.Rows[dataGridViewScangrid.Rows.Count - 1];
 
-                            sn.ScanData.EstimateScanValue(sn.IsMapped, sn.WasMappedEfficiently);        // ensure its up to date
-
                             cur.Tag = img;
                             cur.Cells[0].Tag = null;
                             cur.Cells[4].Tag = cur.Cells[0].ToolTipText = cur.Cells[1].ToolTipText = cur.Cells[2].ToolTipText = cur.Cells[3].ToolTipText = cur.Cells[4].ToolTipText =
@@ -386,7 +384,8 @@ namespace EDDiscovery.UserControls
                                 bdClass.Append(" ").Append("Moon".Tx(this));
 
                                 // moon distances from center body are measured from in SemiMajorAxis
-                                bdDist.AppendFormat("{0:0.0}ls ({1:0}km)", sn.ScanData.nSemiMajorAxis.Value / JournalScan.oneLS_m, sn.ScanData.nSemiMajorAxis.Value / 1000);
+                                if (sn.ScanData.nSemiMajorAxis.HasValue)
+                                    bdDist.AppendFormat("{0:0.0}ls ({1:0}km)", sn.ScanData.nSemiMajorAxis.Value / JournalScan.oneLS_m, sn.ScanData.nSemiMajorAxis.Value / 1000);
                             }
 
                             if (sn.ScanData.PlanetClass != null && sn.ScanData.PlanetClass.Contains("Giant"))
@@ -434,7 +433,7 @@ namespace EDDiscovery.UserControls
                                 overlays.volcanism = true;
                             }
 
-                            if (sn.IsMapped)
+                            if (sn.ScanData.Mapped)
                             {
                                 bdDetails.Append(Environment.NewLine).Append("Surface mapped".Tx(this)).Append(". ");
                                 overlays.mapped = true;
@@ -501,9 +500,9 @@ namespace EDDiscovery.UserControls
                         //! for all relevant bodies:
 
                         // give estimated value
-                        var value = sn.ScanData.EstimateScanValue(sn.IsMapped, sn.WasMappedEfficiently);
                         if (showValues)
                         {
+                            var value = sn.ScanData.EstimatedValue;
                             bdDetails.Append(Environment.NewLine).Append("Value".Tx(this)).Append(" ").Append(value.ToString("N0"));
                         }
 
@@ -540,7 +539,7 @@ namespace EDDiscovery.UserControls
                 if (firstdisplayedrow >= 0 && firstdisplayedrow < dataGridViewScangrid.RowCount)
                     dataGridViewScangrid.FirstDisplayedScrollingRowIndex = firstdisplayedrow;
 
-                toolStripStatusTotalValue.Text = BuildScanValue(scannode);
+                toolStripStatusTotalValue.Text = "~"+ scannode.ScanValue(true).ToString() + " cr";
             }
         }
 
@@ -599,20 +598,6 @@ namespace EDDiscovery.UserControls
             }                        
         }
 
-        private string BuildScanValue(StarScan.SystemNode system)
-        {
-            var value = 0;
-
-            foreach (var body in system.Bodies)
-            {
-                if (body.ScanData != null)
-                { 
-                    value += body.ScanData.EstimateScanValue(body.IsMapped, body.WasMappedEfficiently);
-                }
-            }
-
-            return string.Format("Estimated total scan value: {0:N0}".Tx(this, "AV"), value);
-        }
 
         #endregion
 
@@ -641,6 +626,7 @@ namespace EDDiscovery.UserControls
                 if (icons != 0)
                 {
                     iconsize = Math.Min(iconsize, (bot - top) / icons - 2);             // size so they all fit, less 2 for interspacing
+                                        
                     //System.Diagnostics.Debug.WriteLine("Icon size" + iconsize);
                     right -= iconsize;
                 }
@@ -654,7 +640,7 @@ namespace EDDiscovery.UserControls
 
                 if (overlays?.landable ?? false)
                 {
-                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_Bodies_Landable, new Rectangle(right, vposoverlay, iconsize, iconsize));
+                    e.Graphics.DrawImage((Image)EDDiscovery.Icons.Controls.Scan_Bodies_Landable, new Rectangle(right, vposoverlay, iconsize, iconsize));                    
                     vposoverlay += iconsize + 2;
                 }
 

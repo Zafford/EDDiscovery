@@ -354,16 +354,7 @@ namespace EliteDangerousCore
                 .Select(h => h.journalEntry as JournalScan)
                 .Distinct(new ScansAreForSameBody()).ToList();
 
-            var mappings = historylist.Where(s => s.EntryType == JournalTypeEnum.SAAScanComplete).Select(h => h.journalEntry as JournalSAAScanComplete).ToList();
-
-            long total = scans.Select(scan =>
-            {
-                var mapping = mappings.FirstOrDefault(m => m.BodyName == scan.BodyName);
-                if (mapping == null)
-                    return (long)scan.EstimateScanValue(false, false);
-                else
-                    return (long)scan.EstimateScanValue(true, mapping.ProbesUsed <= mapping.EfficiencyTarget);
-            }).Sum();
+            long total = scans.Select(scan => scan.EstimatedValue).Sum();
 
             return total;
         }
@@ -841,17 +832,11 @@ namespace EliteDangerousCore
                 if (hs == he)
                 {
                     if (he.StartMarker || he.StopMarker)
-                    {
-                        hs.journalEntry.UpdateSyncFlagBit(SyncFlags.StartMarker, false, SyncFlags.StopMarker, false);
-                    }
+                        hs.journalEntry.ClearStartEndFlag();
                     else if (started == false)
-                    {
-                        hs.journalEntry.UpdateSyncFlagBit(SyncFlags.StartMarker, true, SyncFlags.StopMarker, false);
-                    }
+                        hs.journalEntry.SetStartFlag();
                     else
-                    {
-                        hs.journalEntry.UpdateSyncFlagBit(SyncFlags.StartMarker, false, SyncFlags.StopMarker, true);
-                    }
+                        hs.journalEntry.SetEndFlag();
 
                     break;
                 }
@@ -924,7 +909,7 @@ namespace EliteDangerousCore
             }
             else if (je is JournalSAAScanComplete)
             {
-                starscan.AddScanToBestSystem((JournalSAAScanComplete)je, Count - 1, EntryOrder);
+                starscan.AddSAAScanToBestSystem((JournalSAAScanComplete)je, Count - 1, EntryOrder);
             }
             else if (je is JournalFSSDiscoveryScan && he.System != null)
             {
@@ -932,9 +917,7 @@ namespace EliteDangerousCore
             }
             else if (je is IBodyNameAndID)
             {
-                JournalLocOrJump jl;
-                HistoryEntry jlhe;
-                starscan.AddBodyToBestSystem((IBodyNameAndID)je, Count - 1, EntryOrder, out jlhe, out jl);
+                starscan.AddBodyToBestSystem((IBodyNameAndID)je, Count - 1, EntryOrder);
             }
 
             return he;
@@ -971,11 +954,11 @@ namespace EliteDangerousCore
             
             if ( fullhistoryloaddaylimit >0 )
             {
-                var list = (essentialitems == nameof(JournalEntry.JumpScanEssentialEvents)) ? JournalEntry.JumpScanEssentialEvents :
-                           (essentialitems == nameof(JournalEntry.JumpEssentialEvents)) ? JournalEntry.JumpEssentialEvents :
-                           (essentialitems == nameof(JournalEntry.NoEssentialEvents)) ? JournalEntry.NoEssentialEvents :
-                           (essentialitems == nameof(JournalEntry.FullStatsEssentialEvents)) ? JournalEntry.FullStatsEssentialEvents :
-                            JournalEntry.EssentialEvents;
+                var list = (essentialitems == nameof(JournalEssentialEvents.JumpScanEssentialEvents)) ? JournalEssentialEvents.JumpScanEssentialEvents :
+                           (essentialitems == nameof(JournalEssentialEvents.JumpEssentialEvents)) ? JournalEssentialEvents.JumpEssentialEvents :
+                           (essentialitems == nameof(JournalEssentialEvents.NoEssentialEvents)) ? JournalEssentialEvents.NoEssentialEvents :
+                           (essentialitems == nameof(JournalEssentialEvents.FullStatsEssentialEvents)) ? JournalEssentialEvents.FullStatsEssentialEvents :
+                            JournalEssentialEvents.EssentialEvents;
 
                 jlist = JournalEntry.GetAll(CurrentCommander, 
                     ids: list,
@@ -1095,7 +1078,7 @@ namespace EliteDangerousCore
 
                     he.MissionList = missionlistaccumulator.Process(je, he.System, he.WhereAmI, conn);                           // the missions
 
-                    if (je.EventTypeID == JournalTypeEnum.Scan)
+                    if (je.EventTypeID == JournalTypeEnum.Scan && je is JournalScan)
                     {
                         if (!this.starscan.AddScanToBestSystem(je as JournalScan, i, hl))
                         {
@@ -1104,7 +1087,7 @@ namespace EliteDangerousCore
                     }
                     else if (je.EventTypeID == JournalTypeEnum.SAAScanComplete)
                     {
-                        this.starscan.AddScanToBestSystem((JournalSAAScanComplete)je, i, hl);
+                        this.starscan.AddSAAScanToBestSystem((JournalSAAScanComplete)je, i, hl);
                     }
                     else if (je.EventTypeID == JournalTypeEnum.FSSDiscoveryScan && he.System != null)
                     {
@@ -1135,7 +1118,7 @@ namespace EliteDangerousCore
         // true if merged back to previous..
         public static bool MergeEntries(JournalEntry prev, JournalEntry je)
         {
-            if (prev != null)
+            if (prev != null && !EliteConfigInstance.InstanceOptions.DisableMerge)
             {
                 bool prevsame = je.EventTypeID == prev.EventTypeID;
 

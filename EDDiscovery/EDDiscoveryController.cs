@@ -143,13 +143,14 @@ namespace EDDiscovery
             Trace.WriteLine($"*** Elite Dangerous Discovery Initializing - {EDDOptions.Instance.VersionDisplayString}, Platform: {Environment.OSVersion.Platform.ToString()}");
 
             GlobalBookMarkList.LoadBookmarks();
+            GlobalCaptainsLogList.LoadLog();
+
+            msg.Invoke("Decoding Symbols");
+            Icons.IconSet.ResetIcons();     // start with a clean slate loaded up from default icons
 
             msg.Invoke("Locating Crew Members");
             EDDConfig.Instance.Update(false);
             EDDProfiles.Instance.LoadProfiles();
-
-            msg.Invoke("Decoding Symbols");
-            Icons.IconSet.ResetIcons();     // start with a clean slate loaded up from default icons
 
             string path = EDDOptions.Instance.IconsPath ?? System.IO.Path.Combine(EDDOptions.Instance.IconsAppDirectory(), "*.zip");
 
@@ -479,7 +480,15 @@ namespace EDDiscovery
             Debug.Assert(System.Windows.Forms.Application.MessageLoop);
             //System.Diagnostics.Debug.WriteLine("Dispatch from controller UI event " + u.EventTypeStr);
 
+            var uifuel = u as EliteDangerousCore.UIEvents.UIFuel;       // UI Fuel has information on fuel level - update it.
+            if (uifuel != null && history != null)
+            {
+                history.shipinformationlist.UIFuel(uifuel);             // update the SI global value
+                history.GetLast?.UpdateShipInformation(history.shipinformationlist.CurrentShip);    // and make the last entry have this updated info.
+            }
+
             OnNewUIEvent?.Invoke(u);
+
         }
 
         #endregion
@@ -579,8 +588,10 @@ namespace EDDiscovery
                 if (DateTime.Now.Subtract(galmaptime).TotalDays > 14)  // Over 14 days do a sync from EDSM for galmap
                 {
                     LogLine("Get galactic mapping from EDSM.".Tx(this,"EDSM"));
-                    galacticMapping.DownloadFromEDSM();
-                    SQLiteConnectionSystem.PutSettingString("EDSMGalMapLast", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    if (galacticMapping.DownloadFromEDSM())
+                    {
+                        SQLiteConnectionSystem.PutSettingString("EDSMGalMapLast", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    }
                 }
 
                 Debug.WriteLine(BaseUtils.AppTicks.TickCountLap() + " Check systems complete");
@@ -802,7 +813,7 @@ namespace EDDiscovery
                 hist = HistoryList.LoadHistory(journalmonitor, 
                     () => PendingClose, 
                     (p, s) => ReportRefreshProgress(p, string.Format("Processing log file {0}".Tx(this,"PLF") , s)), args.NetLogPath,
-                    args.ForceJournalReload, args.ForceJournalReload, args.CurrentCommander, 
+                    args.ForceNetLogReload, args.ForceJournalReload, args.CurrentCommander, 
                     EDDConfig.Instance.ShowUIEvents, 
                     EDDConfig.Instance.FullHistoryLoadDayLimit, EDDConfig.Instance.EssentialEventTypes);
 

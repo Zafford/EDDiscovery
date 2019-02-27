@@ -44,94 +44,44 @@ namespace EDDiscovery.UserControls
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItemToolbar = new System.Windows.Forms.ToolStripMenuItem();
-            this.showSystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cancelShowSystemToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.lblSystemInfo = new System.Windows.Forms.Label();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserControlScan));
             this.panelControls = new System.Windows.Forms.Panel();
-            this.checkBoxCustomHideFullMats = new ExtendedControls.CheckBoxCustom();
-            this.chkShowOverlays = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxTiny = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxMaterials = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxMaterialsRare = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxEDSM = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxMoons = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxLarge = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxSmall = new ExtendedControls.CheckBoxCustom();
-            this.checkBoxMedium = new ExtendedControls.CheckBoxCustom();
-            this.buttonExtExcel = new ExtendedControls.ButtonExt();
+            this.checkBoxCustomHideFullMats = new ExtendedControls.ExtCheckBox();
+            this.chkShowOverlays = new ExtendedControls.ExtCheckBox();
+            this.extCheckBoxStar = new ExtendedControls.ExtCheckBox();
+            this.checkBoxMaterials = new ExtendedControls.ExtCheckBox();
+            this.checkBoxMaterialsRare = new ExtendedControls.ExtCheckBox();
+            this.checkBoxEDSM = new ExtendedControls.ExtCheckBox();
+            this.checkBoxMoons = new ExtendedControls.ExtCheckBox();
+            this.buttonSize = new ExtendedControls.ExtButton();
+            this.extButtonHighValue = new ExtendedControls.ExtButton();
+            this.buttonExtExcel = new ExtendedControls.ExtButton();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.rollUpPanelTop = new ExtendedControls.RollUpPanel();
-            this.panelStars = new EDDiscovery.UserControls.ScanDisplay();
-            this.contextMenuStrip.SuspendLayout();
+            this.rollUpPanelTop = new ExtendedControls.ExtPanelRollUp();
+            this.panelStars = new EDDiscovery.UserControls.ScanDisplayControl();
             this.panelControls.SuspendLayout();
             this.rollUpPanelTop.SuspendLayout();
             this.SuspendLayout();
             // 
-            // contextMenuStrip
-            // 
-            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItemToolbar,
-            this.showSystemToolStripMenuItem,
-            this.cancelShowSystemToolStripMenuItem});
-            this.contextMenuStrip.Name = "contextMenuStrip";
-            this.contextMenuStrip.Size = new System.Drawing.Size(184, 70);
-            // 
-            // toolStripMenuItemToolbar
-            // 
-            this.toolStripMenuItemToolbar.Name = "toolStripMenuItemToolbar";
-            this.toolStripMenuItemToolbar.Size = new System.Drawing.Size(183, 22);
-            this.toolStripMenuItemToolbar.Text = "Show/Hide Toolbar";
-            this.toolStripMenuItemToolbar.Click += new System.EventHandler(this.toolStripMenuItemToolbar_Click);
-            // 
-            // showSystemToolStripMenuItem
-            // 
-            this.showSystemToolStripMenuItem.Name = "showSystemToolStripMenuItem";
-            this.showSystemToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
-            this.showSystemToolStripMenuItem.Text = "Show System";
-            this.showSystemToolStripMenuItem.Click += new System.EventHandler(this.showSystemToolStripMenuItem_Click);
-            // 
-            // cancelShowSystemToolStripMenuItem
-            // 
-            this.cancelShowSystemToolStripMenuItem.Name = "cancelShowSystemToolStripMenuItem";
-            this.cancelShowSystemToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
-            this.cancelShowSystemToolStripMenuItem.Text = "Cancel Show System";
-            this.cancelShowSystemToolStripMenuItem.Click += new System.EventHandler(this.cancelShowSystemToolStripMenuItem_Click);
-            // 
-            // lblSystemInfo
-            // 
-            this.lblSystemInfo.AutoSize = true;
-            this.lblSystemInfo.ContextMenuStrip = this.contextMenuStrip;
-            this.lblSystemInfo.Location = new System.Drawing.Point(403, 10);
-            this.lblSystemInfo.Margin = new System.Windows.Forms.Padding(0, 4, 0, 0);
-            this.lblSystemInfo.Name = "lblSystemInfo";
-            this.lblSystemInfo.Size = new System.Drawing.Size(43, 13);
-            this.lblSystemInfo.TabIndex = 30;
-            this.lblSystemInfo.Text = "<code>";
-            this.toolTip.SetToolTip(this.lblSystemInfo, "Right click on panel to show/hide the toolbar");
-            // 
             // panelControls
             // 
             this.panelControls.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.panelControls.ContextMenuStrip = this.contextMenuStrip;
             this.panelControls.Controls.Add(this.checkBoxCustomHideFullMats);
             this.panelControls.Controls.Add(this.chkShowOverlays);
-            this.panelControls.Controls.Add(this.checkBoxTiny);
+            this.panelControls.Controls.Add(this.extCheckBoxStar);
             this.panelControls.Controls.Add(this.checkBoxMaterials);
             this.panelControls.Controls.Add(this.checkBoxMaterialsRare);
             this.panelControls.Controls.Add(this.checkBoxEDSM);
             this.panelControls.Controls.Add(this.checkBoxMoons);
-            this.panelControls.Controls.Add(this.checkBoxLarge);
-            this.panelControls.Controls.Add(this.checkBoxSmall);
-            this.panelControls.Controls.Add(this.checkBoxMedium);
+            this.panelControls.Controls.Add(this.buttonSize);
+            this.panelControls.Controls.Add(this.extButtonHighValue);
             this.panelControls.Controls.Add(this.buttonExtExcel);
+            this.panelControls.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelControls.Location = new System.Drawing.Point(0, 0);
             this.panelControls.Margin = new System.Windows.Forms.Padding(0);
             this.panelControls.Name = "panelControls";
-            this.panelControls.Size = new System.Drawing.Size(403, 35);
+            this.panelControls.Size = new System.Drawing.Size(748, 36);
             this.panelControls.TabIndex = 5;
-            this.toolTip.SetToolTip(this.panelControls, "Right click on panel to show/hide the toolbar");
             // 
             // checkBoxCustomHideFullMats
             // 
@@ -150,7 +100,7 @@ namespace EDDiscovery.UserControls
             this.checkBoxCustomHideFullMats.FontNerfReduction = 0.5F;
             this.checkBoxCustomHideFullMats.Image = global::EDDiscovery.Icons.Controls.Scan_HideFullMaterials;
             this.checkBoxCustomHideFullMats.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxCustomHideFullMats.Location = new System.Drawing.Point(64, 0);
+            this.checkBoxCustomHideFullMats.Location = new System.Drawing.Point(104, 2);
             this.checkBoxCustomHideFullMats.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.checkBoxCustomHideFullMats.Name = "checkBoxCustomHideFullMats";
             this.checkBoxCustomHideFullMats.Size = new System.Drawing.Size(32, 32);
@@ -177,7 +127,7 @@ namespace EDDiscovery.UserControls
             this.chkShowOverlays.FontNerfReduction = 0.5F;
             this.chkShowOverlays.Image = global::EDDiscovery.Icons.Controls.Scan_ShowOverlays;
             this.chkShowOverlays.ImageButtonDisabledScaling = 0.5F;
-            this.chkShowOverlays.Location = new System.Drawing.Point(322, 0);
+            this.chkShowOverlays.Location = new System.Drawing.Point(270, 2);
             this.chkShowOverlays.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.chkShowOverlays.Name = "chkShowOverlays";
             this.chkShowOverlays.Size = new System.Drawing.Size(32, 32);
@@ -187,32 +137,32 @@ namespace EDDiscovery.UserControls
             this.chkShowOverlays.UseVisualStyleBackColor = false;
             this.chkShowOverlays.CheckedChanged += new System.EventHandler(this.chkShowOverlays_CheckedChanged);
             // 
-            // checkBoxTiny
+            // extCheckBoxStar
             // 
-            this.checkBoxTiny.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkBoxTiny.BackColor = System.Drawing.Color.Transparent;
-            this.checkBoxTiny.BackgroundImage = global::EDDiscovery.Icons.Controls.Scan_SizeTiny;
-            this.checkBoxTiny.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.checkBoxTiny.CheckBoxColor = System.Drawing.Color.White;
-            this.checkBoxTiny.CheckBoxInnerColor = System.Drawing.Color.White;
-            this.checkBoxTiny.CheckColor = System.Drawing.Color.DarkBlue;
-            this.checkBoxTiny.Cursor = System.Windows.Forms.Cursors.Default;
-            this.checkBoxTiny.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.checkBoxTiny.FlatAppearance.CheckedBackColor = System.Drawing.Color.Green;
-            this.checkBoxTiny.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
-            this.checkBoxTiny.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Silver;
-            this.checkBoxTiny.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkBoxTiny.FontNerfReduction = 0.5F;
-            this.checkBoxTiny.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxTiny.Location = new System.Drawing.Point(243, 0);
-            this.checkBoxTiny.MouseOverColor = System.Drawing.Color.CornflowerBlue;
-            this.checkBoxTiny.Name = "checkBoxTiny";
-            this.checkBoxTiny.Size = new System.Drawing.Size(32, 32);
-            this.checkBoxTiny.TabIndex = 2;
-            this.checkBoxTiny.TickBoxReductionSize = 10;
-            this.toolTip.SetToolTip(this.checkBoxTiny, "Image size teeny tiny");
-            this.checkBoxTiny.UseVisualStyleBackColor = false;
-            this.checkBoxTiny.CheckedChanged += new System.EventHandler(this.checkBoxTiny_CheckedChanged);
+            this.extCheckBoxStar.Appearance = System.Windows.Forms.Appearance.Button;
+            this.extCheckBoxStar.BackColor = System.Drawing.Color.Transparent;
+            this.extCheckBoxStar.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("extCheckBoxStar.BackgroundImage")));
+            this.extCheckBoxStar.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.extCheckBoxStar.CheckBoxColor = System.Drawing.Color.White;
+            this.extCheckBoxStar.CheckBoxInnerColor = System.Drawing.Color.White;
+            this.extCheckBoxStar.CheckColor = System.Drawing.Color.DarkBlue;
+            this.extCheckBoxStar.Cursor = System.Windows.Forms.Cursors.Default;
+            this.extCheckBoxStar.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.extCheckBoxStar.FlatAppearance.CheckedBackColor = System.Drawing.Color.Green;
+            this.extCheckBoxStar.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
+            this.extCheckBoxStar.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Silver;
+            this.extCheckBoxStar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.extCheckBoxStar.FontNerfReduction = 0.5F;
+            this.extCheckBoxStar.ImageButtonDisabledScaling = 0.5F;
+            this.extCheckBoxStar.Location = new System.Drawing.Point(2, 2);
+            this.extCheckBoxStar.MouseOverColor = System.Drawing.Color.CornflowerBlue;
+            this.extCheckBoxStar.Name = "extCheckBoxStar";
+            this.extCheckBoxStar.Size = new System.Drawing.Size(32, 32);
+            this.extCheckBoxStar.TabIndex = 2;
+            this.extCheckBoxStar.TickBoxReductionSize = 10;
+            this.toolTip.SetToolTip(this.extCheckBoxStar, "Select another system to view");
+            this.extCheckBoxStar.UseVisualStyleBackColor = false;
+            this.extCheckBoxStar.Click += new System.EventHandler(this.extCheckBoxStar_Click);
             // 
             // checkBoxMaterials
             // 
@@ -231,7 +181,7 @@ namespace EDDiscovery.UserControls
             this.checkBoxMaterials.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkBoxMaterials.FontNerfReduction = 0.5F;
             this.checkBoxMaterials.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxMaterials.Location = new System.Drawing.Point(0, 0);
+            this.checkBoxMaterials.Location = new System.Drawing.Point(40, 2);
             this.checkBoxMaterials.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.checkBoxMaterials.Name = "checkBoxMaterials";
             this.checkBoxMaterials.Size = new System.Drawing.Size(32, 32);
@@ -258,7 +208,7 @@ namespace EDDiscovery.UserControls
             this.checkBoxMaterialsRare.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkBoxMaterialsRare.FontNerfReduction = 0.5F;
             this.checkBoxMaterialsRare.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxMaterialsRare.Location = new System.Drawing.Point(32, 0);
+            this.checkBoxMaterialsRare.Location = new System.Drawing.Point(72, 2);
             this.checkBoxMaterialsRare.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.checkBoxMaterialsRare.Name = "checkBoxMaterialsRare";
             this.checkBoxMaterialsRare.Size = new System.Drawing.Size(32, 32);
@@ -285,7 +235,7 @@ namespace EDDiscovery.UserControls
             this.checkBoxEDSM.FontNerfReduction = 0.5F;
             this.checkBoxEDSM.Image = global::EDDiscovery.Icons.Controls.Scan_FetchEDSMBodies;
             this.checkBoxEDSM.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxEDSM.Location = new System.Drawing.Point(284, 0);
+            this.checkBoxEDSM.Location = new System.Drawing.Point(232, 2);
             this.checkBoxEDSM.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.checkBoxEDSM.Name = "checkBoxEDSM";
             this.checkBoxEDSM.Size = new System.Drawing.Size(32, 32);
@@ -312,7 +262,7 @@ namespace EDDiscovery.UserControls
             this.checkBoxMoons.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkBoxMoons.FontNerfReduction = 0.5F;
             this.checkBoxMoons.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxMoons.Location = new System.Drawing.Point(103, 0);
+            this.checkBoxMoons.Location = new System.Drawing.Point(143, 2);
             this.checkBoxMoons.MouseOverColor = System.Drawing.Color.CornflowerBlue;
             this.checkBoxMoons.Name = "checkBoxMoons";
             this.checkBoxMoons.Size = new System.Drawing.Size(32, 32);
@@ -322,92 +272,35 @@ namespace EDDiscovery.UserControls
             this.checkBoxMoons.UseVisualStyleBackColor = false;
             this.checkBoxMoons.CheckedChanged += new System.EventHandler(this.checkBoxMoons_CheckedChanged);
             // 
-            // checkBoxLarge
+            // buttonSize
             // 
-            this.checkBoxLarge.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkBoxLarge.BackColor = System.Drawing.Color.Transparent;
-            this.checkBoxLarge.BackgroundImage = global::EDDiscovery.Icons.Controls.Scan_SizeLarge;
-            this.checkBoxLarge.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.checkBoxLarge.CheckBoxColor = System.Drawing.Color.White;
-            this.checkBoxLarge.CheckBoxInnerColor = System.Drawing.Color.White;
-            this.checkBoxLarge.CheckColor = System.Drawing.Color.DarkBlue;
-            this.checkBoxLarge.Cursor = System.Windows.Forms.Cursors.Default;
-            this.checkBoxLarge.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.checkBoxLarge.FlatAppearance.CheckedBackColor = System.Drawing.Color.Green;
-            this.checkBoxLarge.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
-            this.checkBoxLarge.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Silver;
-            this.checkBoxLarge.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkBoxLarge.FontNerfReduction = 0.5F;
-            this.checkBoxLarge.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxLarge.Location = new System.Drawing.Point(147, 0);
-            this.checkBoxLarge.MouseOverColor = System.Drawing.Color.CornflowerBlue;
-            this.checkBoxLarge.Name = "checkBoxLarge";
-            this.checkBoxLarge.Size = new System.Drawing.Size(32, 32);
-            this.checkBoxLarge.TabIndex = 2;
-            this.checkBoxLarge.TickBoxReductionSize = 10;
-            this.toolTip.SetToolTip(this.checkBoxLarge, "Image size large");
-            this.checkBoxLarge.UseVisualStyleBackColor = false;
-            this.checkBoxLarge.CheckedChanged += new System.EventHandler(this.checkBoxLarge_CheckedChanged);
+            this.buttonSize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonSize.Image = global::EDDiscovery.Icons.Controls.Scan_SizeLarge;
+            this.buttonSize.Location = new System.Drawing.Point(188, 2);
+            this.buttonSize.Name = "buttonSize";
+            this.buttonSize.Size = new System.Drawing.Size(32, 32);
+            this.buttonSize.TabIndex = 29;
+            this.toolTip.SetToolTip(this.buttonSize, "Select image size");
+            this.buttonSize.UseVisualStyleBackColor = true;
+            this.buttonSize.Click += new System.EventHandler(this.buttonSize_Click);
             // 
-            // checkBoxSmall
+            // extButtonHighValue
             // 
-            this.checkBoxSmall.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkBoxSmall.BackColor = System.Drawing.Color.Transparent;
-            this.checkBoxSmall.BackgroundImage = global::EDDiscovery.Icons.Controls.Scan_SizeSmall;
-            this.checkBoxSmall.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.checkBoxSmall.CheckBoxColor = System.Drawing.Color.White;
-            this.checkBoxSmall.CheckBoxInnerColor = System.Drawing.Color.White;
-            this.checkBoxSmall.CheckColor = System.Drawing.Color.DarkBlue;
-            this.checkBoxSmall.Cursor = System.Windows.Forms.Cursors.Default;
-            this.checkBoxSmall.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.checkBoxSmall.FlatAppearance.CheckedBackColor = System.Drawing.Color.Green;
-            this.checkBoxSmall.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
-            this.checkBoxSmall.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Silver;
-            this.checkBoxSmall.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkBoxSmall.FontNerfReduction = 0.5F;
-            this.checkBoxSmall.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxSmall.Location = new System.Drawing.Point(211, 0);
-            this.checkBoxSmall.MouseOverColor = System.Drawing.Color.CornflowerBlue;
-            this.checkBoxSmall.Name = "checkBoxSmall";
-            this.checkBoxSmall.Size = new System.Drawing.Size(32, 32);
-            this.checkBoxSmall.TabIndex = 2;
-            this.checkBoxSmall.TickBoxReductionSize = 10;
-            this.toolTip.SetToolTip(this.checkBoxSmall, "Image size small");
-            this.checkBoxSmall.UseVisualStyleBackColor = false;
-            this.checkBoxSmall.CheckedChanged += new System.EventHandler(this.checkBoxSmall_CheckedChanged);
-            // 
-            // checkBoxMedium
-            // 
-            this.checkBoxMedium.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkBoxMedium.BackColor = System.Drawing.Color.Transparent;
-            this.checkBoxMedium.BackgroundImage = global::EDDiscovery.Icons.Controls.Scan_SizeMedium;
-            this.checkBoxMedium.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.checkBoxMedium.CheckBoxColor = System.Drawing.Color.White;
-            this.checkBoxMedium.CheckBoxInnerColor = System.Drawing.Color.White;
-            this.checkBoxMedium.CheckColor = System.Drawing.Color.DarkBlue;
-            this.checkBoxMedium.Cursor = System.Windows.Forms.Cursors.Default;
-            this.checkBoxMedium.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.checkBoxMedium.FlatAppearance.CheckedBackColor = System.Drawing.Color.Green;
-            this.checkBoxMedium.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
-            this.checkBoxMedium.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Silver;
-            this.checkBoxMedium.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkBoxMedium.FontNerfReduction = 0.5F;
-            this.checkBoxMedium.ImageButtonDisabledScaling = 0.5F;
-            this.checkBoxMedium.Location = new System.Drawing.Point(179, 0);
-            this.checkBoxMedium.MouseOverColor = System.Drawing.Color.CornflowerBlue;
-            this.checkBoxMedium.Name = "checkBoxMedium";
-            this.checkBoxMedium.Size = new System.Drawing.Size(32, 32);
-            this.checkBoxMedium.TabIndex = 2;
-            this.checkBoxMedium.TickBoxReductionSize = 10;
-            this.toolTip.SetToolTip(this.checkBoxMedium, "Image size medium");
-            this.checkBoxMedium.UseVisualStyleBackColor = false;
-            this.checkBoxMedium.CheckedChanged += new System.EventHandler(this.checkBoxMedium_CheckedChanged);
+            this.extButtonHighValue.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.extButtonHighValue.Image = global::EDDiscovery.Icons.Controls.Scan_Bodies_HighValue;
+            this.extButtonHighValue.Location = new System.Drawing.Point(308, 2);
+            this.extButtonHighValue.Name = "extButtonHighValue";
+            this.extButtonHighValue.Size = new System.Drawing.Size(32, 32);
+            this.extButtonHighValue.TabIndex = 29;
+            this.toolTip.SetToolTip(this.extButtonHighValue, "Set High Value Limit");
+            this.extButtonHighValue.UseVisualStyleBackColor = true;
+            this.extButtonHighValue.Click += new System.EventHandler(this.extButtonHighValue_Click);
             // 
             // buttonExtExcel
             // 
             this.buttonExtExcel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonExtExcel.Image = global::EDDiscovery.Icons.Controls.Scan_ExportToExcel;
-            this.buttonExtExcel.Location = new System.Drawing.Point(360, 0);
+            this.buttonExtExcel.Location = new System.Drawing.Point(346, 2);
             this.buttonExtExcel.Name = "buttonExtExcel";
             this.buttonExtExcel.Size = new System.Drawing.Size(32, 32);
             this.buttonExtExcel.TabIndex = 29;
@@ -423,11 +316,9 @@ namespace EDDiscovery.UserControls
             // 
             // rollUpPanelTop
             // 
-            this.rollUpPanelTop.ContextMenuStrip = this.contextMenuStrip;
             this.rollUpPanelTop.Controls.Add(this.panelControls);
-            this.rollUpPanelTop.Controls.Add(this.lblSystemInfo);
             this.rollUpPanelTop.Dock = System.Windows.Forms.DockStyle.Top;
-            this.rollUpPanelTop.HiddenMarkerWidth = 0;
+            this.rollUpPanelTop.HiddenMarkerWidth = 400;
             this.rollUpPanelTop.Location = new System.Drawing.Point(0, 0);
             this.rollUpPanelTop.Name = "rollUpPanelTop";
             this.rollUpPanelTop.PinState = true;
@@ -436,9 +327,8 @@ namespace EDDiscovery.UserControls
             this.rollUpPanelTop.RollUpDelay = 1000;
             this.rollUpPanelTop.SecondHiddenMarkerWidth = 0;
             this.rollUpPanelTop.ShowHiddenMarker = true;
-            this.rollUpPanelTop.Size = new System.Drawing.Size(748, 32);
+            this.rollUpPanelTop.Size = new System.Drawing.Size(748, 36);
             this.rollUpPanelTop.TabIndex = 4;
-            this.toolTip.SetToolTip(this.rollUpPanelTop, "Right click on panel to show/hide the toolbar");
             this.rollUpPanelTop.UnrolledHeight = 32;
             this.rollUpPanelTop.UnrollHoverDelay = 1000;
             // 
@@ -447,14 +337,15 @@ namespace EDDiscovery.UserControls
             this.panelStars.CheckEDSM = false;
             this.panelStars.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelStars.HideFullMaterials = false;
-            this.panelStars.Location = new System.Drawing.Point(0, 32);
+            this.panelStars.Location = new System.Drawing.Point(0, 36);
             this.panelStars.Name = "panelStars";
             this.panelStars.ShowMaterials = false;
             this.panelStars.ShowMaterialsRare = false;
             this.panelStars.ShowMoons = false;
             this.panelStars.ShowOverlays = false;
-            this.panelStars.Size = new System.Drawing.Size(748, 650);
+            this.panelStars.Size = new System.Drawing.Size(748, 646);
             this.panelStars.TabIndex = 5;
+            this.panelStars.ValueLimit = 50000;
             // 
             // UserControlScan
             // 
@@ -465,34 +356,26 @@ namespace EDDiscovery.UserControls
             this.Name = "UserControlScan";
             this.Size = new System.Drawing.Size(748, 682);
             this.Resize += new System.EventHandler(this.UserControlScan_Resize);
-            this.contextMenuStrip.ResumeLayout(false);
             this.panelControls.ResumeLayout(false);
             this.rollUpPanelTop.ResumeLayout(false);
-            this.rollUpPanelTop.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
         private System.Windows.Forms.ToolTip toolTip;
-        private ExtendedControls.CheckBoxCustom checkBoxMaterials;
-        private ExtendedControls.CheckBoxCustom checkBoxMoons;
-        private ExtendedControls.CheckBoxCustom checkBoxSmall;
-        private ExtendedControls.CheckBoxCustom checkBoxMedium;
-        private ExtendedControls.CheckBoxCustom checkBoxLarge;
-        private ExtendedControls.CheckBoxCustom checkBoxTiny;
-        private ExtendedControls.CheckBoxCustom checkBoxMaterialsRare;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItemToolbar;
-        private ExtendedControls.CheckBoxCustom checkBoxEDSM;
-        private ExtendedControls.ButtonExt buttonExtExcel;
-        private System.Windows.Forms.Label lblSystemInfo;
-        private ExtendedControls.CheckBoxCustom chkShowOverlays;
+        private ExtendedControls.ExtCheckBox checkBoxMaterials;
+        private ExtendedControls.ExtCheckBox checkBoxMoons;
+        private ExtendedControls.ExtCheckBox checkBoxMaterialsRare;
+        private ExtendedControls.ExtCheckBox checkBoxEDSM;
+        private ExtendedControls.ExtButton buttonExtExcel;
+        private ExtendedControls.ExtCheckBox chkShowOverlays;
         private System.Windows.Forms.Panel panelControls;
-        private ExtendedControls.RollUpPanel rollUpPanelTop;
-        private ExtendedControls.CheckBoxCustom checkBoxCustomHideFullMats;
-        private System.Windows.Forms.ToolStripMenuItem showSystemToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem cancelShowSystemToolStripMenuItem;
-        private ScanDisplay panelStars;
+        private ExtendedControls.ExtPanelRollUp rollUpPanelTop;
+        private ExtendedControls.ExtCheckBox checkBoxCustomHideFullMats;
+        private ScanDisplayControl panelStars;
+        private ExtendedControls.ExtButton buttonSize;
+        private ExtendedControls.ExtButton extButtonHighValue;
+        private ExtendedControls.ExtCheckBox extCheckBoxStar;
     }
 }

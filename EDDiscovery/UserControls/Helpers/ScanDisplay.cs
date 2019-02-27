@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 - 2017 EDDiscovery development team
+ * Copyright © 2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -13,25 +13,20 @@
  * 
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ExtendedControls;
-using System.Drawing.Drawing2D;
-using EliteDangerousCore.EDSM;
-using EliteDangerousCore.DB;
 using EliteDangerousCore;
 using EliteDangerousCore.JournalEvents;
 
 namespace EDDiscovery.UserControls
 {
-    public partial class ScanDisplay : UserControl
+    public partial class ScanDisplayControl : UserControl
     {
         public bool CheckEDSM { get; set; }
         public bool ShowMoons { get; set; }
@@ -39,6 +34,7 @@ namespace EDDiscovery.UserControls
         public bool ShowMaterialsRare { get; set; }
         public bool HideFullMaterials { get; set; }
         public bool ShowOverlays { get; set; }
+        public int ValueLimit { get; set; } = 50000;
 
         public int WidthAvailable { get { return this.Width - vScrollBarCustom.Width; } }   // available display width
         public Point DisplayAreaUsed { get; private set; }  // used area to display in
@@ -54,7 +50,7 @@ namespace EDDiscovery.UserControls
         private Font stdfontUnderline = BaseUtils.FontLoader.GetFont("Microsoft Sans Serif", 8.25F, FontStyle.Underline);
 
         #region Init
-        public ScanDisplay()
+        public ScanDisplayControl()
         {
             InitializeComponent();
             this.AutoScaleMode = AutoScaleMode.None;            // we are dealing with graphics.. lets turn off dialog scaling.
@@ -90,7 +86,7 @@ namespace EDDiscovery.UserControls
             {
                 Point curpos = new Point(leftmargin, topmargin);
                 DisplayAreaUsed = curpos;
-                List<PictureBoxHotspot.ImageElement> starcontrols = new List<PictureBoxHotspot.ImageElement>();
+                List<ExtPictureBox.ImageElement> starcontrols = new List<ExtPictureBox.ImageElement>();
 
                 //for( int i = 0; i < 1000; i +=100)  CreateStarPlanet(starcontrols, EDDiscovery.Properties.Resources.ImageStarDiscWhite, new Point(i, 0), new Size(24, 24), i.ToString(), "");
 
@@ -147,7 +143,7 @@ namespace EDDiscovery.UserControls
 
                             if (nonedsmscans || CheckEDSM)
                             {
-                                List<PictureBoxHotspot.ImageElement> pc = new List<PictureBoxHotspot.ImageElement>();
+                                List<ExtPictureBox.ImageElement> pc = new List<ExtPictureBox.ImageElement>();
 
                                 Point maxpos = CreatePlanetTree(pc, planetnode, curmats, hl, curpos);
 
@@ -199,26 +195,8 @@ namespace EDDiscovery.UserControls
             return last_sn;
         }
 
-        private string BuildScanValue(StarScan.SystemNode system)
-        {
-            var value = 0;
-
-            foreach (var body in system.Bodies)
-            {
-                if (body?.ScanData != null)
-                {
-                    if (CheckEDSM || !body.ScanData.IsEDSMBody)
-                    {
-                        value += body.ScanData.EstimateScanValue(body.IsMapped, body.WasMappedEfficiently);
-                    }
-                }
-            }
-
-            return string.Format("Approx value: {0:N0}".Tx(this,"AV"), value);
-        }
-
         // return right bottom of area used from curpos
-        Point CreatePlanetTree(List<PictureBoxHotspot.ImageElement> pc, StarScan.ScanNode planetnode, MaterialCommoditiesList curmats, HistoryList hl, Point curpos)
+        Point CreatePlanetTree(List<ExtPictureBox.ImageElement> pc, StarScan.ScanNode planetnode, MaterialCommoditiesList curmats, HistoryList hl, Point curpos)
         {
             // PLANETWIDTH|PLANETWIDTH  (if drawing a full planet with rings/landing)
             // or
@@ -288,7 +266,7 @@ namespace EDDiscovery.UserControls
         // labelvoff : any additional compensation for label pos
 
         // return right bottom of area used from curpos
-        Point DrawNode(List<PictureBoxHotspot.ImageElement> pc, StarScan.ScanNode sn, MaterialCommoditiesList curmats, HistoryList hl, 
+        Point DrawNode(List<ExtPictureBox.ImageElement> pc, StarScan.ScanNode sn, MaterialCommoditiesList curmats, HistoryList hl, 
                                     Image notscanned, Point curpos,
                                     Size size, ref int offset, bool aligndown = false, int labelvoff = 0,
                                     bool toplevel = false)
@@ -329,7 +307,7 @@ namespace EDDiscovery.UserControls
                 else //else not a top-level star
                 {
                     bool indicatematerials = sc.HasMaterials && !ShowMaterials;
-                    bool valuable = sc.EstimateScanValue(sn.IsMapped, sn.WasMappedEfficiently) > 50000;
+                    bool valuable = sc.EstimatedValue >= ValueLimit;
 
                     Image nodeimage = sc.IsStar ? sc.GetStarTypeImage() : sc.GetPlanetClassImage();
 
@@ -350,7 +328,7 @@ namespace EDDiscovery.UserControls
 
                             if (ShowOverlays)
                             {
-                                int overlaystotal = (sc.Terraformable ? 1 : 0) + (sc.HasMeaningfulVolcanism ? 1 : 0) + (valuable ? 1 : 0) + (sn.IsMapped ? 1 : 0);
+                                int overlaystotal = (sc.Terraformable ? 1 : 0) + (sc.HasMeaningfulVolcanism ? 1 : 0) + (valuable ? 1 : 0) + (sc.Mapped ? 1 : 0);
                                 int ovsize = (overlaystotal>1) ? quarterheight : (quarterheight*3/2);
                                 int pos = 0;
 
@@ -372,7 +350,7 @@ namespace EDDiscovery.UserControls
                                     pos += ovsize + 1;
                                 }
 
-                                if (sn.IsMapped)
+                                if (sc.Mapped)
                                     g.DrawImage(Icons.Controls.Scan_Bodies_Mapped, new Rectangle(0, pos, ovsize, ovsize));
                             }
 
@@ -455,7 +433,7 @@ namespace EDDiscovery.UserControls
         }
 
 
-        Point CreateMaterialNodes(List<PictureBoxHotspot.ImageElement> pc, JournalScan sn, MaterialCommoditiesList curmats, HistoryList hl, Point matpos, Size matsize)
+        Point CreateMaterialNodes(List<ExtPictureBox.ImageElement> pc, JournalScan sn, MaterialCommoditiesList curmats, HistoryList hl, Point matpos, Size matsize)
         {
             Point startpos = matpos;
             Point maximum = matpos;
@@ -510,7 +488,7 @@ namespace EDDiscovery.UserControls
             return maximum;
         }
 
-        void CreateMaterialImage(List<PictureBoxHotspot.ImageElement> pc, Point matpos, Size matsize, string text, string mattag, string mattip, Color matcolour, Color textcolour)
+        void CreateMaterialImage(List<ExtPictureBox.ImageElement> pc, Point matpos, Size matsize, string text, string mattag, string mattip, Color matcolour, Color textcolour)
         {
             System.Drawing.Imaging.ColorMap colormap = new System.Drawing.Imaging.ColorMap();
             colormap.OldColor = Color.White;    // this is the marker colour to replace
@@ -520,18 +498,18 @@ namespace EDDiscovery.UserControls
 
             BaseUtils.BitMapHelpers.DrawTextCentreIntoBitmap(ref mat, text, stdfont, textcolour);
 
-            PictureBoxHotspot.ImageElement ie = new PictureBoxHotspot.ImageElement(
+            ExtPictureBox.ImageElement ie = new ExtPictureBox.ImageElement(
                             new Rectangle(matpos.X, matpos.Y, matsize.Width, matsize.Height), mat, mattag, mattip);
 
             pc.Add(ie);
         }
 
-        Point CreateImageLabel(List<PictureBoxHotspot.ImageElement> c, Image i, Point postopright, Size size, string label,
+        Point CreateImageLabel(List<ExtPictureBox.ImageElement> c, Image i, Point postopright, Size size, string label,
                                     string ttext, int labelhoff, bool fromEDSM, bool imgowned = true)
         {
             //System.Diagnostics.Debug.WriteLine("    " + label + " " + postopright + " size " + size + " hoff " + labelhoff + " laby " + (postopright.Y + size.Height + labelhoff));
 
-            PictureBoxHotspot.ImageElement ie = new PictureBoxHotspot.ImageElement(new Rectangle(postopright.X, postopright.Y, size.Width, size.Height), i, ttext, ttext, imgowned);
+            ExtPictureBox.ImageElement ie = new ExtPictureBox.ImageElement(new Rectangle(postopright.X, postopright.Y, size.Width, size.Height), i, ttext, ttext, imgowned);
 
             Point max = new Point(postopright.X + size.Width, postopright.Y + size.Height);
 
@@ -543,7 +521,7 @@ namespace EDDiscovery.UserControls
 
                 Point labposcenthorz = new Point(postopright.X + size.Width / 2, postopright.Y + size.Height + labelhoff);
 
-                PictureBoxHotspot.ImageElement lab = new PictureBoxHotspot.ImageElement();
+                ExtPictureBox.ImageElement lab = new ExtPictureBox.ImageElement();
                 Size maxsize = new Size(300, 30);
 
                 lab.TextCentreAutosize(labposcenthorz, maxsize, label, font, EDDTheme.Instance.LabelColor, this.BackColor);
@@ -566,9 +544,9 @@ namespace EDDiscovery.UserControls
             return max;
         }
 
-        void RepositionTree(List<PictureBoxHotspot.ImageElement> pc, int xoff, int yoff)
+        void RepositionTree(List<ExtPictureBox.ImageElement> pc, int xoff, int yoff)
         {
-            foreach (PictureBoxHotspot.ImageElement c in pc)
+            foreach (ExtPictureBox.ImageElement c in pc)
                 c.Translate(xoff, yoff);
         }
 
@@ -578,7 +556,8 @@ namespace EDDiscovery.UserControls
             beltsize = new Size(StarSize.Width * 1 / 2, StarSize.Height);
             planetsize = new Size(StarSize.Width * 3 / 4, StarSize.Height * 3 / 4);
             moonsize = new Size(StarSize.Width * 2 / 4, StarSize.Height * 2 / 4);
-            materialsize = new Size(24, 24);
+            int matsize = stars >= 64 ? 24 : 16;
+            materialsize = new Size(matsize, matsize);
             itemsepar = new Size(stars / 16, stars / 16);
             topmargin = 10;
             leftmargin = 0;
@@ -588,7 +567,7 @@ namespace EDDiscovery.UserControls
 
         #region User interaction
 
-        private void ClickElement(object sender, MouseEventArgs e, PictureBoxHotspot.ImageElement i, object tag)
+        private void ClickElement(object sender, MouseEventArgs e, ExtPictureBox.ImageElement i, object tag)
         {
             if (i != null)
                 ShowInfo((string)tag, i.pos.Location.X < panelStars.Width / 2);
