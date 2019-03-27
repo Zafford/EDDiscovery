@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2016 EDDiscovery development team
+ * Copyright © 2016-2019 EDDiscovery development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
  * file except in compliance with the License. You may obtain a copy of the License at
@@ -205,12 +205,13 @@ namespace EliteDangerousCore
             return new JournalReaderEntry { JournalEntry = je, Json = jo };
         }
 
-        // function needs to report two things, list of JREs (may be empty) and if it read something, bool.. hence form changed
+        // function needs to report two things, list of JREs (may be empty) and UIs, and if it read something, bool.. hence form changed
         // bool reporting we have performed any sort of action is important.. it causes the TLU pos to be updated above even if we have junked all the events or delayed them
 
-        public bool ReadJournal(out List<JournalReaderEntry> jent, bool historyrefreshparsing, bool resetOnError )      // True if anything was processed, even if we rejected it
+        public bool ReadJournal(out List<JournalReaderEntry> jent, out List<UIEvent> uievents, bool historyrefreshparsing, bool resetOnError )      // True if anything was processed, even if we rejected it
         {
             jent = new List<JournalReaderEntry>();
+            uievents = new List<UIEvent>();
 
             bool readanything = false;
 
@@ -234,16 +235,72 @@ namespace EliteDangerousCore
                             var dentry = StartEntries.Dequeue();
                             dentry.JournalEntry.SetCommander(TravelLogUnit.CommanderId.Value);
                             //System.Diagnostics.Debug.WriteLine("*** UnDelay " + dentry.JournalEntry.EventTypeStr);
-                            jent.Add(dentry);
+                            AddEntry(dentry, ref jent, ref uievents);
                         }
 
                         //System.Diagnostics.Debug.WriteLine("*** Send  " + newentry.JournalEntry.EventTypeStr);
-                        jent.Add(newentry);                     // and store in new entry
+                        AddEntry(newentry, ref jent, ref uievents);
                     }
                 }
             }
 
             return readanything;
         }
+
+        // this class looks at the JE and decides if its really a UI not a journal entry
+
+        private void AddEntry( JournalReaderEntry newentry, ref List<JournalReaderEntry> jent, ref List<UIEvent> uievents )
+        {
+            if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.Music)
+            {
+                var jm = newentry.JournalEntry as JournalEvents.JournalMusic;
+                uievents.Add(new UIEvents.UIMusic(jm.MusicTrack, jm.MusicTrackID, jm.EventTimeUTC, false));
+                return;
+            }
+            else if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.UnderAttack)
+            {
+                var ja = newentry.JournalEntry as JournalEvents.JournalUnderAttack;
+                uievents.Add(new UIEvents.UIUnderAttack(ja.Target, ja.EventTimeUTC, false));
+                return;
+            }
+            else if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.SendText)
+            {
+                var jt = newentry.JournalEntry as JournalEvents.JournalSendText;
+                if (jt.Command)
+                {
+                    uievents.Add(new UIEvents.UICommand(jt.Message, jt.To, jt.EventTimeUTC, false));
+                    return;
+                }
+            }
+            else if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.ShipTargeted)
+            {
+                var jst = newentry.JournalEntry as JournalEvents.JournalShipTargeted;
+                if (jst.TargetLocked == false)
+                {
+                    uievents.Add(new UIEvents.UIShipTargeted(jst, jst.EventTimeUTC, false));
+                    return;
+                }
+
+            }
+            else if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.ReceiveText)
+            {
+                var jt = newentry.JournalEntry as JournalEvents.JournalReceiveText;
+                if (jt.Channel == "Info")
+                {
+                    uievents.Add(new UIEvents.UIReceiveText(jt, jt.EventTimeUTC, false));
+                    return;
+                }
+            }
+            else if (newentry.JournalEntry.EventTypeID == JournalTypeEnum.FSDTarget)
+            {
+                var jt = newentry.JournalEntry as JournalEvents.JournalFSDTarget;
+                uievents.Add(new UIEvents.UIFSDTarget(jt, jt.EventTimeUTC, false));
+                return;
+            }
+
+            jent.Add(newentry);
+        }
     }
 }
+
+

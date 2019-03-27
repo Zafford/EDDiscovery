@@ -112,8 +112,6 @@ namespace EDDiscovery.UserControls
             cfs.AddJournalEntries();
             cfs.Closing += EventFilterChanged;
 
-            TravelHistoryFilter.InitaliseComboBox(comboBoxHistoryWindow, DbHistorySave);
-
             checkBoxCursorToTop.Checked = SQLiteConnectionUser.GetSettingBool(DbAutoTop, true);
 
             dataGridViewTravel.MakeDoubleBuffered();
@@ -151,6 +149,10 @@ namespace EDDiscovery.UserControls
             BaseUtils.Translator.Instance.Translate(historyContextMenu, this);
             BaseUtils.Translator.Instance.Translate(contextMenuStripOutlines, this);
             BaseUtils.Translator.Instance.Translate(toolTip, this);
+
+            TravelHistoryFilter.InitaliseComboBox(comboBoxHistoryWindow, DbHistorySave);
+
+
         }
 
         private void ToolStripOutliningOn_CheckStateChanged(object sender, EventArgs e)
@@ -1313,17 +1315,10 @@ namespace EDDiscovery.UserControls
 
         private void buttonField_Click(object sender, EventArgs e)
         {
-            ExtendedConditionsForms.ConditionFilterForm frm = new ExtendedConditionsForms.ConditionFilterForm();
-            List<string> namelist = new List<string>() { "Note" };
-            namelist.AddRange(discoveryform.Globals.NameList);
-            frm.InitFilter("History: Filter out fields",
-                            System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                            JournalEntry.GetNameOfEvents(),
-                            (s) => { return BaseUtils.TypeHelpers.GetPropertyFieldNames(JournalEntry.TypeOfJournalEntry(s)); },
-                            namelist, fieldfilter);
-            if (frm.ShowDialog(this.FindForm()) == DialogResult.OK)
+            BaseUtils.ConditionLists res = FilterHelpers.ShowDialog(FindForm(), fieldfilter, discoveryform, "History: Filter out fields".Tx(this, "THF"));
+            if (res != null)
             {
-                fieldfilter = frm.Result;
+                fieldfilter = res;
                 SQLiteDBClass.PutSettingString(DbFieldFilter, fieldfilter.GetJSON());
                 HistoryChanged(current_historylist);
             }
